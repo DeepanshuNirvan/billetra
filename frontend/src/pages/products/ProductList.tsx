@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Upload, Package, AlertTriangle, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Package, AlertTriangle, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Table, Pagination } from '../../components/ui/Table';
@@ -8,9 +8,10 @@ import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
 import { ProductForm } from '../../components/products/ProductForm';
-import { BulkUpload } from '../../components/products/BulkUpload';
+import { BulkActions } from '../../components/bulk/BulkActions';
 import { useProducts, useDeleteProduct, useCategories } from '../../hooks/useProducts';
 import { formatCurrency } from '../../utils/format';
+import { productsApi } from '../../api/products';
 import type { Product } from '../../types';
 
 export default function ProductList() {
@@ -20,7 +21,6 @@ export default function ProductList() {
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | undefined>();
-  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useProducts({ search: search || undefined, categoryId: categoryId || undefined, page, limit: 20 });
@@ -133,14 +133,9 @@ export default function ProductList() {
           <h2 className="text-xl font-bold text-gray-900">Products</h2>
           <p className="text-sm text-gray-500 mt-0.5">{total} products</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" leftIcon={<Upload className="h-4 w-4" />} onClick={() => setShowBulkUpload(true)}>
-            Bulk Upload
-          </Button>
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => { setEditProduct(undefined); setShowForm(true); }}>
-            Add Product
-          </Button>
-        </div>
+        <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => { setEditProduct(undefined); setShowForm(true); }}>
+          Add Product
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -161,6 +156,23 @@ export default function ProductList() {
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
+
+      <BulkActions
+        type="products"
+        exportData={products.map((p) => ({
+          name: p.name, sku: p.sku, hsn_code: p.hsnCode, selling_price: p.sellingPrice,
+          cost_price: p.purchasePrice, gst_rate: p.gstRate, unit_type: p.unitType,
+          stock_quantity: p.stockQuantity, low_stock_alert: p.lowStockAlert,
+          category_name: p.category?.name ?? '',
+        }))}
+        exportColumns={[
+          { header: 'Name', dataKey: 'name' }, { header: 'SKU', dataKey: 'sku' },
+          { header: 'HSN', dataKey: 'hsn_code' }, { header: 'Price', dataKey: 'selling_price' },
+          { header: 'GST%', dataKey: 'gst_rate' }, { header: 'Stock', dataKey: 'stock_quantity' },
+          { header: 'Category', dataKey: 'category_name' },
+        ]}
+        onImport={productsApi.bulkImport}
+      />
 
       {products.length === 0 && !isLoading ? (
         <EmptyState
@@ -189,7 +201,6 @@ export default function ProductList() {
         onClose={() => { setShowForm(false); setEditProduct(undefined); }}
         product={editProduct}
       />
-      <BulkUpload open={showBulkUpload} onClose={() => setShowBulkUpload(false)} />
 
       <Modal
         open={!!deleteId}

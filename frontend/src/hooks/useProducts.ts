@@ -65,14 +65,14 @@ export function useDeleteProduct() {
   });
 }
 
-export function useBulkUpload() {
+export function useBulkImport() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (file: File) => productsApi.bulkUpload(file),
-    onSuccess: (result) => {
+    mutationFn: (rows: Record<string, unknown>[]) => productsApi.bulkImport(rows),
+    onSuccess: (result: { created: number; errors: string[] }) => {
       qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
-      toast.success(`Uploaded ${result.created} products`);
+      toast.success(`Imported ${result.created} products`);
     },
-    onError: (err: Error) => toast.error('Bulk upload failed', err.message),
+    onError: (err: Error) => toast.error('Bulk import failed', err.message),
   });
 }

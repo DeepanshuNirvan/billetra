@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Package } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Package, History } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { ProductForm } from '../../components/products/ProductForm';
+import { AuditHistory } from '../../components/audit/AuditHistory';
 import { useProduct, useDeleteProduct } from '../../hooks/useProducts';
 import { formatCurrency, formatDate } from '../../utils/format';
 
@@ -17,6 +18,7 @@ export default function ProductDetail() {
   const deleteProduct = useDeleteProduct();
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
 
   if (isLoading) return <PageSpinner />;
   if (!product) return <div className="p-6 text-center text-gray-500">Product not found</div>;
@@ -43,7 +45,27 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="flex border-b border-gray-200 gap-4">
+        {(['details', 'history'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-2 text-sm font-medium capitalize flex items-center gap-1.5 border-b-2 transition-colors ${
+              activeTab === tab ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab === 'history' && <History className="h-3.5 w-3.5" />}
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'history' && (
+        <Card><AuditHistory entityType="product" entityId={product.id} /></Card>
+      )}
+
+      {activeTab === 'details' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Card>
           <CardHeader title="Product Info" />
           <dl className="space-y-3">
@@ -94,8 +116,9 @@ export default function ProductDetail() {
           </div>
         </Card>
       </div>
+      )}
 
-      {product.description && (
+      {activeTab === 'details' && product.description && (
         <Card>
           <CardHeader title="Description" />
           <p className="text-sm text-gray-600">{product.description}</p>

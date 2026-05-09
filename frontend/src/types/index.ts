@@ -3,6 +3,13 @@ export interface User {
   email: string;
   name: string;
   phone?: string;
+  role: 'super_admin' | 'user';
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface AdminUser extends User {
+  business?: Business;
 }
 
 export interface Business {
@@ -124,18 +131,51 @@ export interface Bill {
 }
 
 export interface DashboardData {
-  todaySales: number;
-  monthSales: number;
-  totalOutstanding: number;
-  gstCollected: number;
-  totalBills: number;
-  paidBills: number;
-  pendingBills: number;
-  topProducts: { name: string; revenue: number; quantity: number }[];
-  topCustomers: { name: string; totalAmount: number; billCount: number }[];
-  recentBills: Bill[];
-  lowStockProducts: Product[];
-  salesChart: { date: string; amount: number }[];
+  today_sales: number;
+  yesterday_sales: number;
+  month_sales: number;
+  last_month_sales: number;
+  total_outstanding: number;
+  gst_collected: number;
+  total_bills: number;
+  paid_bills: number;
+  pending_bills: number;
+  top_products: { name: string; total_revenue: number; total_qty: number }[];
+  top_customers: { name: string; total_amount: number; total_bills: number }[];
+  recent_bills: {
+    id: string;
+    invoice_number: string;
+    customer_name: string;
+    bill_date: string;
+    total_amount: number;
+    status: string;
+  }[];
+  low_stock_products: Product[];
+  sales_chart: { date: string; amount: number }[];
+  monthly_revenue: { month: string; amount: number }[];
+  overdue_aging: {
+    days_0_30: number;
+    days_31_60: number;
+    days_61_90: number;
+    days_90_plus: number;
+  } | null;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  user_id: string;
+  entity_type: string;
+  entity_id: string;
+  action: 'create' | 'update' | 'delete';
+  old_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
+  ip_address?: string;
+  created_at: string;
+}
+
+export interface BulkImportResult {
+  created: number;
+  errors: string[];
 }
 
 export interface PaginatedResponse<T> {

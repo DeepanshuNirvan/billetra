@@ -8,8 +8,10 @@ import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
 import { CustomerForm } from '../../components/customers/CustomerForm';
+import { BulkActions } from '../../components/bulk/BulkActions';
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
 import { formatCurrency } from '../../utils/format';
+import { customersApi } from '../../api/customers';
 import type { Customer } from '../../types';
 
 export default function CustomerList() {
@@ -111,6 +113,20 @@ export default function CustomerList() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
         />
       </div>
+
+      <BulkActions
+        type="customers"
+        exportData={customers.map((c) => ({
+          name: c.name, email: c.email ?? '', phone: c.phone ?? '', gstin: c.gstin ?? '',
+          address: c.billingAddress ?? '', state: c.state ?? '',
+        }))}
+        exportColumns={[
+          { header: 'Name', dataKey: 'name' }, { header: 'Email', dataKey: 'email' },
+          { header: 'Phone', dataKey: 'phone' }, { header: 'GSTIN', dataKey: 'gstin' },
+          { header: 'Address', dataKey: 'address' }, { header: 'State', dataKey: 'state' },
+        ]}
+        onImport={customersApi.bulkImport}
+      />
 
       {customers.length === 0 && !isLoading ? (
         <EmptyState

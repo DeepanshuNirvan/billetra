@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Package, Users, Wallet,
-  BarChart3, Settings, LogOut, ChevronLeft, Zap,
+  BarChart3, Settings, LogOut, ChevronLeft, Zap, Shield,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../store/authStore';
@@ -19,14 +19,14 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const { business, user } = useAuthStore();
+  const { business, user, isSuperAdmin } = useAuthStore();
   const logout = useLogout();
   const { sidebarOpen, toggleSidebar } = useUIStore();
 
   return (
     <aside
       className={clsx(
-        'hidden md:flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 flex-shrink-0',
+        'hidden md:flex flex-col h-screen bg-surface border-r border-gray-100 transition-all duration-300 flex-shrink-0',
         sidebarOpen ? 'w-60' : 'w-16'
       )}
     >
@@ -34,14 +34,14 @@ export function Sidebar() {
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
         {sidebarOpen && (
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
+            <div className="h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center flex-shrink-0">
               <Zap className="h-5 w-5 text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900">Billetra</span>
           </div>
         )}
         {!sidebarOpen && (
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center mx-auto">
+          <div className="h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center mx-auto">
             <Zap className="h-5 w-5 text-white" />
           </div>
         )}
@@ -72,9 +72,9 @@ export function Sidebar() {
             end={exact}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 mb-1 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 mb-1 text-sm font-medium transition-colors min-h-[44px]',
                 isActive
-                  ? 'bg-indigo-50 text-indigo-700'
+                  ? 'bg-primary-50 text-primary-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
                 !sidebarOpen && 'justify-center'
               )
@@ -83,12 +83,36 @@ export function Sidebar() {
           >
             {({ isActive }) => (
               <>
-                <Icon className={clsx('h-5 w-5 flex-shrink-0', isActive ? 'text-indigo-600' : 'text-gray-400')} />
+                <Icon className={clsx('h-5 w-5 flex-shrink-0', isActive ? 'text-primary-600' : 'text-gray-400')} />
                 {sidebarOpen && <span>{label}</span>}
               </>
             )}
           </NavLink>
         ))}
+
+        {/* Admin link — super admin only */}
+        {isSuperAdmin && (
+          <NavLink
+            to="/admin/users"
+            className={({ isActive }) =>
+              clsx(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 mb-1 text-sm font-medium transition-colors mt-2 border-t border-gray-100 pt-4 min-h-[44px]',
+                isActive
+                  ? 'bg-purple-50 text-purple-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                !sidebarOpen && 'justify-center'
+              )
+            }
+            title={!sidebarOpen ? 'Admin' : undefined}
+          >
+            {({ isActive }) => (
+              <>
+                <Shield className={clsx('h-5 w-5 flex-shrink-0', isActive ? 'text-purple-600' : 'text-gray-400')} />
+                {sidebarOpen && <span>Admin</span>}
+              </>
+            )}
+          </NavLink>
+        )}
       </nav>
 
       {/* Collapse button when closed */}
@@ -114,7 +138,7 @@ export function Sidebar() {
         <button
           onClick={logout}
           className={clsx(
-            'flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full',
+            'flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full min-h-[44px]',
             !sidebarOpen && 'justify-center'
           )}
           title={!sidebarOpen ? 'Logout' : undefined}

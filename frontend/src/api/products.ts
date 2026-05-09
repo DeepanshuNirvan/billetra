@@ -41,13 +41,10 @@ export const productsApi = {
     await apiClient.delete(`/products/${id}`);
   },
 
-  bulkUpload: async (file: File): Promise<{ created: number; errors: string[] }> => {
-    const form = new FormData();
-    form.append('file', file);
+  bulkImport: async (rows: Record<string, unknown>[]): Promise<{ created: number; errors: string[] }> => {
     const { data } = await apiClient.post<ApiResponse<{ created: number; errors: string[] }>>(
-      '/products/bulk-upload',
-      form,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      '/products/bulk-import',
+      rows
     );
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;

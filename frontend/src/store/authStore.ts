@@ -7,6 +7,7 @@ interface AuthState {
   user: User | null;
   business: Business | null;
   isAuthenticated: boolean;
+  isSuperAdmin: boolean;
   login: (token: string, user: User, business?: Business) => void;
   logout: () => void;
   setBusiness: (business: Business) => void;
@@ -20,19 +21,26 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       business: null,
       isAuthenticated: false,
+      isSuperAdmin: false,
 
       login: (token, user, business) => {
         localStorage.setItem('billetra_token', token);
-        set({ token, user, business: business ?? null, isAuthenticated: true });
+        set({
+          token,
+          user,
+          business: business ?? null,
+          isAuthenticated: true,
+          isSuperAdmin: user.role === 'super_admin',
+        });
       },
 
       logout: () => {
         localStorage.removeItem('billetra_token');
-        set({ token: null, user: null, business: null, isAuthenticated: false });
+        set({ token: null, user: null, business: null, isAuthenticated: false, isSuperAdmin: false });
       },
 
       setBusiness: (business) => set({ business }),
-      setUser: (user) => set({ user }),
+      setUser: (user) => set({ user, isSuperAdmin: user.role === 'super_admin' }),
     }),
     {
       name: 'billetra_auth',
@@ -41,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         business: state.business,
         isAuthenticated: state.isAuthenticated,
+        isSuperAdmin: state.isSuperAdmin,
       }),
     }
   )

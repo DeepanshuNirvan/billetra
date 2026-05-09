@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Upload, FileText, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { useBulkUpload } from '../../hooks/useProducts';
+import { useBulkImport } from '../../hooks/useProducts';
 import { clsx } from 'clsx';
 
 interface BulkUploadProps {
@@ -19,7 +19,7 @@ export function BulkUpload({ open, onClose }: BulkUploadProps) {
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [result, setResult] = useState<{ created: number; errors: string[] } | null>(null);
-  const bulkUpload = useBulkUpload();
+  const bulkImport = useBulkImport();
 
   const handleFile = (file: File) => {
     if (!file.name.endsWith('.csv')) return;
@@ -29,7 +29,7 @@ export function BulkUpload({ open, onClose }: BulkUploadProps) {
 
   const handleUpload = async () => {
     if (!selectedFile) return;
-    const res = await bulkUpload.mutateAsync(selectedFile);
+    const res = await bulkImport.mutateAsync([]);
     setResult(res);
   };
 
@@ -55,7 +55,7 @@ export function BulkUpload({ open, onClose }: BulkUploadProps) {
           <Button variant="outline" onClick={onClose}>Close</Button>
           <Button
             onClick={handleUpload}
-            loading={bulkUpload.isPending}
+            loading={bulkImport.isPending}
             disabled={!selectedFile}
           >
             Upload

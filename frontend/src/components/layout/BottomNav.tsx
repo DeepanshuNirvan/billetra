@@ -21,14 +21,14 @@ export function BottomNav() {
             end={exact}
             className={({ isActive }) =>
               clsx(
-                'flex-1 flex flex-col items-center gap-1 py-2.5 px-1 text-xs font-medium transition-colors',
-                isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
+                'flex-1 flex flex-col items-center gap-1 py-2.5 px-1 text-xs font-medium transition-colors min-h-[44px] justify-center',
+                isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
               )
             }
           >
             {({ isActive }) => (
               <>
-                <Icon className={clsx('h-5 w-5', isActive && 'text-indigo-600')} />
+                <Icon className={clsx('h-5 w-5', isActive && 'text-primary-600')} />
                 <span>{label}</span>
               </>
             )}

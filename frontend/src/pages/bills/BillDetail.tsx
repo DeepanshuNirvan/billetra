@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Download, Edit, Copy, CheckCircle, XCircle, ArrowLeft, Printer,
+  Download, Edit, Copy, CheckCircle, XCircle, ArrowLeft, Printer, History,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -10,6 +10,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { BillStatusBadge } from '../../components/ui/Badge';
+import { AuditHistory } from '../../components/audit/AuditHistory';
 import { useBill, useMarkBillPaid, useDuplicateBill, useCancelBill } from '../../hooks/useBills';
 import { useAuthStore } from '../../store/authStore';
 import { downloadBillPdf } from '../../utils/pdfGenerator';
@@ -27,6 +28,7 @@ export default function BillDetail() {
   const [showMarkPaid, setShowMarkPaid] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
 
   if (isLoading) return <PageSpinner />;
   if (!bill) return <div className="p-6 text-center text-gray-500">Bill not found</div>;
@@ -160,10 +162,34 @@ export default function BillDetail() {
         ))}
       </div>
 
-      {/* Bill preview */}
-      <div className="overflow-x-auto">
-        <BillPreview bill={bill} business={business} />
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 gap-4">
+        {(['details', 'history'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-2 text-sm font-medium capitalize flex items-center gap-1.5 border-b-2 transition-colors ${
+              activeTab === tab
+                ? 'border-primary-600 text-primary-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab === 'history' && <History className="h-3.5 w-3.5" />}
+            {tab}
+          </button>
+        ))}
       </div>
+
+      {activeTab === 'details' && (
+        <div className="overflow-x-auto">
+          <BillPreview bill={bill} business={business} />
+        </div>
+      )}
+      {activeTab === 'history' && (
+        <Card>
+          <AuditHistory entityType="bill" entityId={bill.id} />
+        </Card>
+      )}
 
       {/* Mark Paid Modal */}
       <Modal

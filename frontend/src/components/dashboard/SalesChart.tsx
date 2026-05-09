@@ -22,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-white rounded-lg border border-gray-100 shadow-lg p-3">
         <p className="text-xs text-gray-500 mb-1">{label}</p>
-        <p className="text-sm font-bold text-indigo-600">{formatCurrency(payload[0].value)}</p>
+        <p className="text-sm font-bold text-primary-600">{formatCurrency(payload[0].value)}</p>
       </div>
     );
   }
@@ -75,7 +75,7 @@ export function SalesChart({ data, title = 'Sales Overview' }: SalesChartProps) 
                 width={50}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="amount" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="amount" fill="var(--color-primary-600)" radius={[4, 4, 0, 0]} maxBarSize={40} />
             </BarChart>
           ) : (
             <LineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
@@ -97,7 +97,7 @@ export function SalesChart({ data, title = 'Sales Overview' }: SalesChartProps) 
               <Line
                 type="monotone"
                 dataKey="amount"
-                stroke="#4f46e5"
+                stroke="var(--color-primary-600)"
                 strokeWidth={2.5}
                 dot={{ fill: '#4f46e5', r: 4 }}
                 activeDot={{ r: 6 }}

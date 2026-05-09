@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Phone, Mail, MapPin, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, Phone, Mail, MapPin, FileText, History } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { Badge, BillStatusBadge } from '../../components/ui/Badge';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { CustomerForm } from '../../components/customers/CustomerForm';
+import { AuditHistory } from '../../components/audit/AuditHistory';
 import { useCustomer } from '../../hooks/useCustomers';
 import { useBills } from '../../hooks/useBills';
 import { formatCurrency, formatDate } from '../../utils/format';
@@ -16,6 +17,7 @@ export default function CustomerDetail() {
   const { data: customer, isLoading } = useCustomer(id!);
   const { data: billsData } = useBills({ customerId: id, limit: 10 });
   const [showEdit, setShowEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
 
   if (isLoading) return <PageSpinner />;
   if (!customer) return <div className="p-6 text-center text-gray-500">Customer not found</div>;
@@ -41,7 +43,28 @@ export default function CustomerDetail() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex border-b border-gray-200 gap-4">
+        {(['details', 'history'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-2 text-sm font-medium capitalize flex items-center gap-1.5 border-b-2 transition-colors ${
+              activeTab === tab ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab === 'history' && <History className="h-3.5 w-3.5" />}
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'history' && (
+        <Card><AuditHistory entityType="customer" entityId={customer.id} /></Card>
+      )}
+
+      {activeTab === 'details' && (
+        <>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <p className="text-xs text-gray-400 uppercase font-semibold">Outstanding Balance</p>
           <p className={`text-2xl font-bold mt-1 ${customer.outstandingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
@@ -140,6 +163,8 @@ export default function CustomerDetail() {
           )}
         </Card>
       </div>
+        </>
+      )}
 
       <CustomerForm open={showEdit} onClose={() => setShowEdit(false)} customer={customer} />
     </div>

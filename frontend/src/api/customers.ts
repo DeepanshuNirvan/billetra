@@ -39,6 +39,15 @@ export const customersApi = {
     await apiClient.delete(`/customers/${id}`);
   },
 
+  bulkImport: async (rows: Record<string, unknown>[]): Promise<{ created: number; errors: string[] }> => {
+    const { data } = await apiClient.post<ApiResponse<{ created: number; errors: string[] }>>(
+      '/customers/bulk-import',
+      rows
+    );
+    if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
+    return data.data;
+  },
+
   bills: async (id: string): Promise<{ data: import('../types').Bill[] }> => {
     const { data } = await apiClient.get<ApiResponse<{ data: import('../types').Bill[] }>>(`/customers/${id}/bills`);
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
