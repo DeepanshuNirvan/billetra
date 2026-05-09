@@ -97,6 +97,7 @@ func (h *BillHandler) Create(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.Created(c, bill)
 	}
+	utils.LogAudit(h.db, userID, "bill", bill.ID.String(), "create", c.IP(), nil, fullBill)
 	return utils.Created(c, fullBill)
 }
 
@@ -125,6 +126,7 @@ func (h *BillHandler) Update(c *fiber.Ctx) error {
 		log.Printf("update bill error: %v", err)
 		return utils.BadRequest(c, err.Error())
 	}
+	utils.LogAudit(h.db, userID, "bill", id, "update", c.IP(), nil, bill)
 	return utils.OK(c, bill)
 }
 
@@ -136,6 +138,7 @@ func (h *BillHandler) Delete(c *fiber.Ctx) error {
 		log.Printf("delete bill error: %v", err)
 		return utils.BadRequest(c, err.Error())
 	}
+	utils.LogAudit(h.db, userID, "bill", id, "delete", c.IP(), nil, nil)
 	return utils.OKMessage(c, "bill deleted")
 }
 

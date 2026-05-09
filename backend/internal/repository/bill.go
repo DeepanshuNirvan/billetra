@@ -222,6 +222,93 @@ func (r *BillRepository) GetRecentBills(userID string, limit int) ([]BillSummary
 	return results, err
 }
 
+type ChartPoint struct {
+	Date   string  `json:"date"`
+	Amount float64 `json:"amount"`
+}
+
+func (r *BillRepository) GetSalesChart(userID string, days int) ([]ChartPoint, error) {
+	var results []ChartPoint
+	err := r.db.Raw(`
+		SELECT TO_CHAR(gs.day, 'YYYY-MM-DD') as date,
+		       COALESCE(SUM(b.total_amount), 0) as amount
+		FROM generate_series(
+			NOW() - INTERVAL '1 day' * $1, NOW(), '1 day'::interval
+		) gs(day)
+		LEFT JOIN bills b ON DATE(b.bill_date) = DATE(gs.day)
+			AND b.user_id = $2 AND b.status != 'cancelled'
+		GROUP BY gs.day
+		ORDER BY gs.day ASC
+	`, days-1, userID).Scan(&results).Error
+	return results, err
+}
+
+type MonthPoint struct {
+	Month  string  `json:"month"`
+	Amount float64 `json:"amount"`
+}
+
+func (r *BillRepository) GetMonthlyRevenue(userID string, months int) ([]MonthPoint, error) {
+	var results []MonthPoint
+	err := r.db.Raw(`
+		SELECT TO_CHAR(gs.month, 'Mon YYYY') as month,
+		       COALESCE(SUM(b.total_amount), 0) as amount
+		FROM generate_series(
+			date_trunc('month', NOW() - INTERVAL '1 month' * ($1-1)),
+			date_trunc('month', NOW()),
+			'1 month'::interval
+		) gs(month)
+		LEFT JOIN bills b ON date_trunc('month', b.bill_date) = gs.month
+			AND b.user_id = $2 AND b.status != 'cancelled'
+		GROUP BY gs.month
+		ORDER BY gs.month ASC
+	`, months, userID).Scan(&results).Error
+	return results, err
+}
+
+type AgingBuckets struct {
+	Days0to30  float64 `json:"days_0_30"`
+	Days31to60 float64 `json:"days_31_60"`
+	Days61to90 float64 `json:"days_61_90"`
+	Days90plus float64 `json:"days_90_plus"`
+}
+
+func (r *BillRepository) GetOverdueAging(userID string) (*AgingBuckets, error) {
+	var b AgingBuckets
+	err := r.db.Raw(`
+		SELECT
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) <= INTERVAL '30 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_0_to_30,
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '30 days' AND AGE(NOW(), due_date) <= INTERVAL '60 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_31_to_60,
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '60 days' AND AGE(NOW(), due_date) <= INTERVAL '90 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_61_to_90,
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '90 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_90_plus
+		FROM bills
+		WHERE user_id = ? AND status IN ('pending', 'overdue') AND due_date IS NOT NULL
+	`, userID).Scan(&b).Error
+	return &b, err
+}
+
+func (r *BillRepository) GetYesterdaySales(userID string) (float64, error) {
+	var result struct{ Amount float64 }
+	yesterday := time.Now().AddDate(0, 0, -1)
+	start := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, yesterday.Location())
+	end := start.Add(24*time.Hour - time.Second)
+	r.db.Model(&models.Bill{}).
+		Where("user_id = ? AND bill_date BETWEEN ? AND ? AND status != 'cancelled'", userID, start, end).
+		Select("COALESCE(SUM(total_amount),0) as amount").Scan(&result)
+	return result.Amount, nil
+}
+
+func (r *BillRepository) GetLastMonthSales(userID string) (float64, error) {
+	var result struct{ Amount float64 }
+	now := time.Now()
+	firstOfLastMonth := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location())
+	lastOfLastMonth := time.Date(now.Year(), now.Month(), 0, 23, 59, 59, 0, now.Location())
+	r.db.Model(&models.Bill{}).
+		Where("user_id = ? AND bill_date BETWEEN ? AND ? AND status != 'cancelled'", userID, firstOfLastMonth, lastOfLastMonth).
+		Select("COALESCE(SUM(total_amount),0) as amount").Scan(&result)
+	return result.Amount, nil
+}
+
 type SalesReport struct {
 	Period      string  `json:"period"`
 	TotalSales  float64 `json:"total_sales"`

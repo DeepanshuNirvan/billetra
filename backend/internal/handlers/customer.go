@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/billetra/backend/internal/models"
@@ -9,16 +10,18 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type CustomerHandler struct {
 	repo     *repository.CustomerRepository
 	billRepo *repository.BillRepository
+	db       *gorm.DB
 	validate *validator.Validate
 }
 
-func NewCustomerHandler(repo *repository.CustomerRepository, billRepo *repository.BillRepository) *CustomerHandler {
-	return &CustomerHandler{repo: repo, billRepo: billRepo, validate: validator.New()}
+func NewCustomerHandler(repo *repository.CustomerRepository, billRepo *repository.BillRepository, db *gorm.DB) *CustomerHandler {
+	return &CustomerHandler{repo: repo, billRepo: billRepo, db: db, validate: validator.New()}
 }
 
 type CreateCustomerInput struct {
@@ -84,6 +87,7 @@ func (h *CustomerHandler) Create(c *fiber.Ctx) error {
 		log.Printf("create customer error: %v", err)
 		return utils.InternalError(c, "failed to create customer")
 	}
+	utils.LogAudit(h.db, userID, "customer", customer.ID.String(), "create", c.IP(), nil, customer)
 	return utils.Created(c, customer)
 }
 
@@ -129,6 +133,7 @@ func (h *CustomerHandler) Update(c *fiber.Ctx) error {
 		log.Printf("update customer error: %v", err)
 		return utils.InternalError(c, "failed to update customer")
 	}
+	utils.LogAudit(h.db, userID, "customer", customer.ID.String(), "update", c.IP(), nil, customer)
 	return utils.OK(c, customer)
 }
 
@@ -145,7 +150,67 @@ func (h *CustomerHandler) Delete(c *fiber.Ctx) error {
 		log.Printf("delete customer error: %v", err)
 		return utils.InternalError(c, "failed to delete customer")
 	}
+	utils.LogAudit(h.db, userID, "customer", id, "delete", c.IP(), nil, nil)
 	return utils.OKMessage(c, "customer deleted")
+}
+
+// BulkImport handles JSON array: POST /customers/bulk-import
+func (h *CustomerHandler) BulkImport(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+	uid, _ := uuid.Parse(userID)
+
+	var inputs []struct {
+		Name           string  `json:"name"`
+		Phone          string  `json:"phone"`
+		Email          string  `json:"email"`
+		GSTIN          string  `json:"gstin"`
+		PAN            string  `json:"pan"`
+		BillingAddress string  `json:"billing_address"`
+		State          string  `json:"state"`
+		CreditLimit    float64 `json:"credit_limit"`
+		PaymentTerms   string  `json:"payment_terms"`
+	}
+	if err := c.BodyParser(&inputs); err != nil {
+		return utils.BadRequest(c, "invalid JSON array")
+	}
+	if len(inputs) == 0 {
+		return utils.BadRequest(c, "no items provided")
+	}
+	if len(inputs) > 500 {
+		return utils.BadRequest(c, "max 500 items per import")
+	}
+
+	var customers []models.Customer
+	var errs []string
+	for i, inp := range inputs {
+		if inp.Name == "" {
+			errs = append(errs, fmt.Sprintf("row %d: name is required", i+1))
+			continue
+		}
+		customers = append(customers, models.Customer{
+			UserID:         uid,
+			Name:           inp.Name,
+			Phone:          inp.Phone,
+			Email:          inp.Email,
+			GSTIN:          inp.GSTIN,
+			PAN:            inp.PAN,
+			BillingAddress: inp.BillingAddress,
+			State:          inp.State,
+			CreditLimit:    inp.CreditLimit,
+			PaymentTerms:   inp.PaymentTerms,
+			IsActive:       true,
+		})
+	}
+
+	created := 0
+	if len(customers) > 0 {
+		if err := h.repo.BulkCreate(customers); err != nil {
+			log.Printf("bulk import customers error: %v", err)
+			return utils.InternalError(c, "failed to import customers")
+		}
+		created = len(customers)
+	}
+	return utils.Created(c, fiber.Map{"created": created, "errors": errs})
 }
 
 func (h *CustomerHandler) Statement(c *fiber.Ctx) error {

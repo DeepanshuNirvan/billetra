@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/csv"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -12,15 +13,17 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type ProductHandler struct {
 	repo     *repository.ProductRepository
+	db       *gorm.DB
 	validate *validator.Validate
 }
 
-func NewProductHandler(repo *repository.ProductRepository) *ProductHandler {
-	return &ProductHandler{repo: repo, validate: validator.New()}
+func NewProductHandler(repo *repository.ProductRepository, db *gorm.DB) *ProductHandler {
+	return &ProductHandler{repo: repo, db: db, validate: validator.New()}
 }
 
 type CreateProductInput struct {
@@ -110,6 +113,7 @@ func (h *ProductHandler) Create(c *fiber.Ctx) error {
 		log.Printf("create product error: %v", err)
 		return utils.InternalError(c, "failed to create product")
 	}
+	utils.LogAudit(h.db, userID, "product", p.ID.String(), "create", c.IP(), nil, p)
 	return utils.Created(c, p)
 }
 
@@ -179,6 +183,7 @@ func (h *ProductHandler) Update(c *fiber.Ctx) error {
 		log.Printf("update product error: %v", err)
 		return utils.InternalError(c, "failed to update product")
 	}
+	utils.LogAudit(h.db, userID, "product", p.ID.String(), "update", c.IP(), nil, p)
 	return utils.OK(c, p)
 }
 
@@ -195,7 +200,69 @@ func (h *ProductHandler) Delete(c *fiber.Ctx) error {
 		log.Printf("delete product error: %v", err)
 		return utils.InternalError(c, "failed to delete product")
 	}
+	utils.LogAudit(h.db, userID, "product", id, "delete", c.IP(), nil, nil)
 	return utils.OKMessage(c, "product deleted")
+}
+
+// BulkImport handles JSON array: POST /products/bulk-import
+func (h *ProductHandler) BulkImport(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+	uid, _ := uuid.Parse(userID)
+
+	var inputs []CreateProductInput
+	if err := c.BodyParser(&inputs); err != nil {
+		return utils.BadRequest(c, "invalid JSON array")
+	}
+	if len(inputs) == 0 {
+		return utils.BadRequest(c, "no items provided")
+	}
+	if len(inputs) > 500 {
+		return utils.BadRequest(c, "max 500 items per import")
+	}
+
+	var products []models.Product
+	var errs []string
+
+	for i, input := range inputs {
+		if input.Name == "" {
+			errs = append(errs, fmt.Sprintf("row %d: name is required", i+1))
+			continue
+		}
+		p := models.Product{
+			UserID:        uid,
+			Name:          input.Name,
+			SKU:           input.SKU,
+			Description:   input.Description,
+			HSNCode:       input.HSNCode,
+			UnitType:      input.UnitType,
+			SellingPrice:  input.SellingPrice,
+			PurchasePrice: input.PurchasePrice,
+			GSTRate:       input.GSTRate,
+			StockQuantity: input.StockQuantity,
+			LowStockAlert: input.LowStockAlert,
+			IsActive:      true,
+		}
+		if p.UnitType == "" {
+			p.UnitType = "piece"
+		}
+		if input.CategoryID != nil && *input.CategoryID != "" {
+			cid, err := uuid.Parse(*input.CategoryID)
+			if err == nil {
+				p.CategoryID = &cid
+			}
+		}
+		products = append(products, p)
+	}
+
+	created := 0
+	if len(products) > 0 {
+		if err := h.repo.BulkCreate(products); err != nil {
+			log.Printf("bulk import products error: %v", err)
+			return utils.InternalError(c, "failed to import products")
+		}
+		created = len(products)
+	}
+	return utils.Created(c, fiber.Map{"created": created, "errors": errs})
 }
 
 // BulkUpload handles CSV: name,sku,price,gst_rate,hsn_code,stock

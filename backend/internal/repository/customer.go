@@ -55,3 +55,7 @@ func (r *CustomerRepository) UpdateOutstandingBalance(tx *gorm.DB, customerID st
 		Where("id = ?", customerID).
 		UpdateColumn("outstanding_balance", gorm.Expr("outstanding_balance + ?", amount)).Error
 }
+
+func (r *CustomerRepository) BulkCreate(customers []models.Customer) error {
+	return r.db.CreateInBatches(customers, 50).Error
+}

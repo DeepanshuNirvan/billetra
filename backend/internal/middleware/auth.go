@@ -43,10 +43,26 @@ func AuthRequired() fiber.Handler {
 		}
 
 		email, _ := claims["email"].(string)
+		role, _ := claims["role"].(string)
+		if role == "" {
+			role = "user"
+		}
 
 		c.Locals("user_id", userID)
 		c.Locals("email", email)
+		c.Locals("role", role)
 
+		return c.Next()
+	}
+}
+
+// RequireRole returns middleware that allows only users with the given role.
+func RequireRole(role string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userRole, _ := c.Locals("role").(string)
+		if userRole != role {
+			return utils.Forbidden(c, "insufficient permissions")
+		}
 		return c.Next()
 	}
 }

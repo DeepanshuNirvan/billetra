@@ -15,13 +15,11 @@ import (
 )
 
 func main() {
-	// Load config
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	// Connect to DB
 	db, err := database.Connect(cfg)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
@@ -42,16 +40,17 @@ func main() {
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(authService)
+	adminHandler := handlers.NewAdminHandler(userRepo, authService)
+	auditHandler := handlers.NewAuditHandler(db)
 	businessHandler := handlers.NewBusinessHandler(db)
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo)
-	productHandler := handlers.NewProductHandler(productRepo)
-	customerHandler := handlers.NewCustomerHandler(customerRepo, billRepo)
+	productHandler := handlers.NewProductHandler(productRepo, db)
+	customerHandler := handlers.NewCustomerHandler(customerRepo, billRepo, db)
 	accountHandler := handlers.NewAccountHandler(accountRepo)
 	billHandler := handlers.NewBillHandler(billService, billRepo, pdfService, db)
 	dashboardHandler := handlers.NewDashboardHandler(billRepo, productRepo)
 	reportHandler := handlers.NewReportHandler(billRepo, productRepo)
 
-	// Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
@@ -69,20 +68,19 @@ func main() {
 	app.Use(logger.New())
 	app.Use(middleware.CORS())
 
-	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
 	api := app.Group("/api")
 
-	// Auth routes (public)
+	// Auth (public)
 	auth := api.Group("/auth")
 	auth.Post("/signup", authHandler.Signup)
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/refresh", middleware.AuthRequired(), authHandler.Refresh)
 
-	// Protected routes
+	// Protected
 	protected := api.Group("", middleware.AuthRequired())
 
 	// Business
@@ -94,15 +92,17 @@ func main() {
 	protected.Post("/categories", categoryHandler.Create)
 	protected.Delete("/categories/:id", categoryHandler.Delete)
 
-	// Products
+	// Products — bulk-import must come before :id routes
+	protected.Post("/products/bulk-import", productHandler.BulkImport)
+	protected.Post("/products/bulk-upload", productHandler.BulkUpload)
 	protected.Get("/products", productHandler.List)
 	protected.Post("/products", productHandler.Create)
 	protected.Get("/products/:id", productHandler.GetByID)
 	protected.Put("/products/:id", productHandler.Update)
 	protected.Delete("/products/:id", productHandler.Delete)
-	protected.Post("/products/bulk-upload", productHandler.BulkUpload)
 
 	// Customers
+	protected.Post("/customers/bulk-import", customerHandler.BulkImport)
 	protected.Get("/customers", customerHandler.List)
 	protected.Post("/customers", customerHandler.Create)
 	protected.Get("/customers/:id", customerHandler.GetByID)
@@ -134,6 +134,16 @@ func main() {
 	protected.Get("/reports/sales", reportHandler.Sales)
 	protected.Get("/reports/gst", reportHandler.GST)
 	protected.Get("/reports/inventory", reportHandler.Inventory)
+
+	// Audit logs
+	protected.Get("/audit-logs", auditHandler.List)
+
+	// Admin — super_admin only
+	admin := api.Group("/admin", middleware.AuthRequired(), middleware.RequireRole("super_admin"))
+	admin.Get("/users", adminHandler.ListUsers)
+	admin.Post("/users", adminHandler.CreateUser)
+	admin.Get("/users/:id", adminHandler.GetUser)
+	admin.Put("/users/:id", adminHandler.UpdateUser)
 
 	log.Printf("Billetra backend starting on port %s", cfg.Port)
 	if err := app.Listen(":" + cfg.Port); err != nil {
