@@ -9,12 +9,12 @@ type Response struct {
 	Error   string      `json:"error,omitempty"`
 }
 
-type PaginatedResponse struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data"`
-	Total   int64       `json:"total"`
-	Page    int         `json:"page"`
-	Limit   int         `json:"limit"`
+type PaginatedPayload struct {
+	Data       interface{} `json:"data"`
+	Total      int64       `json:"total"`
+	Page       int         `json:"page"`
+	Limit      int         `json:"limit"`
+	TotalPages int64       `json:"totalPages"`
 }
 
 func OK(c *fiber.Ctx, data interface{}) error {
@@ -30,12 +30,19 @@ func OKMessage(c *fiber.Ctx, message string) error {
 }
 
 func OKPaginated(c *fiber.Ctx, data interface{}, total int64, page, limit int) error {
-	return c.Status(200).JSON(PaginatedResponse{
+	totalPages := (total + int64(limit) - 1) / int64(limit)
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	return c.Status(200).JSON(Response{
 		Success: true,
-		Data:    data,
-		Total:   total,
-		Page:    page,
-		Limit:   limit,
+		Data: PaginatedPayload{
+			Data:       data,
+			Total:      total,
+			Page:       page,
+			Limit:      limit,
+			TotalPages: totalPages,
+		},
 	})
 }
 

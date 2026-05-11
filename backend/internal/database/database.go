@@ -2,8 +2,10 @@ package database
 
 import (
 	"log"
+	"os"
 
 	"github.com/billetra/backend/internal/config"
+	"github.com/pressly/goose/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -34,4 +36,25 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 	log.Println("Database connected successfully")
 	DB = db
 	return db, nil
+}
+
+func RunMigrations(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+
+	goose.SetDialect("postgres")
+
+	migrationsDir := "migrations"
+	if _, err := os.Stat(migrationsDir); os.IsNotExist(err) {
+		migrationsDir = "../../migrations"
+	}
+
+	if err := goose.Up(sqlDB, migrationsDir); err != nil {
+		return err
+	}
+
+	log.Println("Migrations applied successfully")
+	return nil
 }

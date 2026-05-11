@@ -37,7 +37,9 @@ export const calculateBillTotals = (
   items: BillItem[],
   billDiscountType: 'fixed' | 'percent',
   billDiscountValue: number,
-  isInterstate: boolean
+  isInterstate: boolean,
+  /** When set, GST is applied at this rate on the whole bill instead of per-item */
+  billGstRate?: number
 ): BillTotals => {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity - item.discountAmount, 0);
 
@@ -48,14 +50,21 @@ export const calculateBillTotals = (
 
   const taxableAmount = subtotal - billDiscount;
 
-  // Sum up GST amounts from items proportionally after bill discount
-  const itemTaxTotal = items.reduce((sum, item) => sum + item.gstAmount, 0);
-  const itemTaxableTotal = items.reduce(
-    (sum, item) => sum + (item.price * item.quantity - item.discountAmount),
-    0
-  );
-  const discountFactor = itemTaxableTotal > 0 ? taxableAmount / itemTaxableTotal : 1;
-  const totalTax = Math.round(itemTaxTotal * discountFactor * 100) / 100;
+  let totalTax: number;
+
+  if (billGstRate != null && billGstRate > 0) {
+    // Whole-bill GST: apply single rate on taxable amount
+    totalTax = Math.round((taxableAmount * billGstRate) / 100 * 100) / 100;
+  } else {
+    // Per-item GST: sum item gst amounts proportionally after bill discount
+    const itemTaxTotal = items.reduce((sum, item) => sum + item.gstAmount, 0);
+    const itemTaxableTotal = items.reduce(
+      (sum, item) => sum + (item.price * item.quantity - item.discountAmount),
+      0
+    );
+    const discountFactor = itemTaxableTotal > 0 ? taxableAmount / itemTaxableTotal : 1;
+    totalTax = Math.round(itemTaxTotal * discountFactor * 100) / 100;
+  }
 
   const cgstAmount = isInterstate ? 0 : Math.round((totalTax / 2) * 100) / 100;
   const sgstAmount = isInterstate ? 0 : Math.round((totalTax / 2) * 100) / 100;

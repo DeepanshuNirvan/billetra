@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle, Info } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Card } from '../ui/Card';
+import { SearchableSelect } from '../ui/SearchableSelect';
 import { BillItemRow } from './BillItemRow';
 import { BillTemplates } from './BillTemplates';
 import { useProducts } from '../../hooks/useProducts';
@@ -14,7 +15,7 @@ import { useCreateBill, useUpdateBill } from '../../hooks/useBills';
 import { useAuthStore } from '../../store/authStore';
 import { calculateItemTotals, calculateBillTotals } from '../../utils/gst';
 import { formatCurrency, formatDateInput } from '../../utils/format';
-import { BILL_SIZES, BILL_TEMPLATES } from '../../utils/constants';
+import { BILL_SIZES, BILL_TEMPLATES, GST_RATES } from '../../utils/constants';
 import type { Bill, BillItem } from '../../types';
 import { format } from 'date-fns';
 import { downloadBillPdf } from '../../utils/pdfGenerator';
@@ -65,6 +66,10 @@ export function BillForm({ existingBill }: BillFormProps) {
   const [showTemplates, setShowTemplates] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // GST on whole bill
+  const [gstOnWhole, setGstOnWhole] = useState(false);
+  const [billGstRate, setBillGstRate] = useState(18);
+
   // Auto-detect interstate based on customer state vs business state
   useEffect(() => {
     if (customerId && business?.state) {
@@ -75,7 +80,22 @@ export function BillForm({ existingBill }: BillFormProps) {
     }
   }, [customerId, customers, business?.state]);
 
-  const totals = calculateBillTotals(items, discountType, discountValue, isInterstate);
+  // When gstOnWhole toggled, zero out item gst rates
+  useEffect(() => {
+    if (gstOnWhole) {
+      setItems((prev) =>
+        prev.map((item) => calculateItemTotals({ ...item, gstRate: 0 }))
+      );
+    }
+  }, [gstOnWhole]);
+
+  const totals = calculateBillTotals(
+    items,
+    discountType,
+    discountValue,
+    isInterstate,
+    gstOnWhole ? billGstRate : undefined
+  );
 
   const handleItemChange = useCallback((index: number, item: BillItem) => {
     setItems((prev) => prev.map((it, i) => (i === index ? item : it)));
@@ -105,7 +125,11 @@ export function BillForm({ existingBill }: BillFormProps) {
     dueDate: dueDate || undefined,
     billSize,
     template,
-    items: items.map(({ id: _id, ...rest }) => rest),
+    items: items.map(({ id: _id, ...rest }) => ({
+      ...rest,
+      // If gstOnWhole, override item gst rate with billGstRate so backend computes correctly
+      gstRate: gstOnWhole ? billGstRate : rest.gstRate,
+    })),
     discountType,
     discountValue,
     notes: notes || undefined,
@@ -138,26 +162,27 @@ export function BillForm({ existingBill }: BillFormProps) {
 
   const isSaving = createBill.isPending || updateBill.isPending;
 
+  const customerOptions = customers.map((c) => ({
+    value: c.id,
+    label: c.name,
+    sublabel: c.phone || undefined,
+  }));
+
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 space-y-6">
       {/* Top row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Customer */}
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Customer</label>
-          <select
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">Walk-in Customer</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
+        {/* Customer – searchable */}
+        <SearchableSelect
+          label="Customer"
+          value={customerId}
+          onChange={setCustomerId}
+          options={customerOptions}
+          placeholder="Select customer"
+          searchPlaceholder="Search customers..."
+          emptyLabel="Walk-in Customer"
+        />
 
-        {/* Bill Date */}
         <Input
           label="Bill Date"
           type="date"
@@ -167,7 +192,6 @@ export function BillForm({ existingBill }: BillFormProps) {
           required
         />
 
-        {/* Due Date */}
         <Input
           label="Due Date"
           type="date"
@@ -177,7 +201,7 @@ export function BillForm({ existingBill }: BillFormProps) {
         />
       </div>
 
-      {/* Bill size + template */}
+      {/* Bill size + template + account */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
         <Select
           label="Bill Size"
@@ -191,7 +215,7 @@ export function BillForm({ existingBill }: BillFormProps) {
             <select
               value={template}
               onChange={(e) => setTemplate(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               {BILL_TEMPLATES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -218,7 +242,6 @@ export function BillForm({ existingBill }: BillFormProps) {
         />
       </div>
 
-      {/* Template preview */}
       {showTemplates && (
         <Card>
           <p className="text-sm font-semibold text-gray-700 mb-4">Choose Template</p>
@@ -226,18 +249,52 @@ export function BillForm({ existingBill }: BillFormProps) {
         </Card>
       )}
 
-      {/* Interstate toggle */}
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="interstate"
-          checked={isInterstate}
-          onChange={(e) => setIsInterstate(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-        />
-        <label htmlFor="interstate" className="text-sm text-gray-700">
-          Interstate Sale (IGST applies instead of CGST+SGST)
+      {/* Toggles row */}
+      <div className="flex flex-wrap items-center gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+        {/* Interstate */}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            id="interstate"
+            checked={isInterstate}
+            onChange={(e) => setIsInterstate(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          <span className="text-sm text-gray-700 font-medium">
+            Interstate Sale <span className="font-normal text-gray-500">(IGST)</span>
+          </span>
         </label>
+
+        {/* GST on whole bill */}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            id="gstOnWhole"
+            checked={gstOnWhole}
+            onChange={(e) => setGstOnWhole(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          <span className="text-sm text-gray-700 font-medium">GST on whole bill</span>
+        </label>
+
+        {gstOnWhole && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">GST Rate:</span>
+            <select
+              value={billGstRate}
+              onChange={(e) => setBillGstRate(parseFloat(e.target.value))}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              {GST_RATES.filter((r) => r > 0).map((r) => (
+                <option key={r} value={r}>{r}%</option>
+              ))}
+            </select>
+            <span className="flex items-center gap-1 text-xs text-amber-600">
+              <Info className="h-3.5 w-3.5" />
+              Item GST fields disabled
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Items Table */}
@@ -258,15 +315,17 @@ export function BillForm({ existingBill }: BillFormProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Product</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Name</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">HSN</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Qty</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Unit</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Price (₹)</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">Discount</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500">GST%</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500">Amount</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">HSN</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Unit</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Price (₹)</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Discount</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {gstOnWhole ? `GST (${billGstRate}%)` : 'GST%'}
+                </th>
+                <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
                 <th className="px-3 py-2.5 w-10" />
               </tr>
             </thead>
@@ -279,27 +338,22 @@ export function BillForm({ existingBill }: BillFormProps) {
                   products={products}
                   onChange={handleItemChange}
                   onRemove={handleRemoveItem}
+                  gstOnWhole={gstOnWhole}
+                  billGstRate={billGstRate}
                 />
               ))}
             </tbody>
           </table>
         </div>
         <div className="px-5 py-4 border-t border-gray-50">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={handleAddItem}
-          >
+          <Button type="button" variant="ghost" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={handleAddItem}>
             Add another item
           </Button>
         </div>
       </Card>
 
-      {/* Bottom: Notes + Totals */}
+      {/* Notes + Totals */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Notes */}
         <div className="space-y-4">
           <Textarea
             label="Notes / Terms"
@@ -310,16 +364,14 @@ export function BillForm({ existingBill }: BillFormProps) {
           />
         </div>
 
-        {/* Totals panel */}
         <Card>
           <h3 className="font-semibold text-gray-900 mb-4">Bill Summary</h3>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Subtotal</span>
               <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
             </div>
 
-            {/* Bill-level discount */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500 flex-1">Discount</span>
               <select
@@ -351,19 +403,43 @@ export function BillForm({ existingBill }: BillFormProps) {
               <span className="font-medium">{formatCurrency(totals.taxableAmount)}</span>
             </div>
 
-            {isInterstate ? (
+            {gstOnWhole && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">IGST</span>
-                <span>{formatCurrency(totals.igstAmount)}</span>
+                <span className="text-gray-500">
+                  GST @ {billGstRate}% (whole bill)
+                </span>
+                <span>{formatCurrency(totals.totalTax)}</span>
               </div>
-            ) : (
-              <>
+            )}
+
+            {!gstOnWhole && (
+              isInterstate ? (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">CGST</span>
+                  <span className="text-gray-500">IGST</span>
+                  <span>{formatCurrency(totals.igstAmount)}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">CGST</span>
+                    <span>{formatCurrency(totals.cgstAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">SGST</span>
+                    <span>{formatCurrency(totals.sgstAmount)}</span>
+                  </div>
+                </>
+              )
+            )}
+
+            {gstOnWhole && !isInterstate && (
+              <>
+                <div className="flex justify-between text-sm text-gray-400">
+                  <span>CGST ({billGstRate / 2}%)</span>
                   <span>{formatCurrency(totals.cgstAmount)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">SGST</span>
+                <div className="flex justify-between text-sm text-gray-400">
+                  <span>SGST ({billGstRate / 2}%)</span>
                   <span>{formatCurrency(totals.sgstAmount)}</span>
                 </div>
               </>
@@ -371,7 +447,7 @@ export function BillForm({ existingBill }: BillFormProps) {
 
             <div className="border-t border-gray-200 pt-3 flex justify-between">
               <span className="font-bold text-gray-900 text-base">Grand Total</span>
-              <span className="font-bold text-indigo-700 text-xl">
+              <span className="font-bold text-primary-700 text-xl">
                 {formatCurrency(totals.totalAmount)}
               </span>
             </div>
@@ -384,18 +460,10 @@ export function BillForm({ existingBill }: BillFormProps) {
         <Button variant="outline" onClick={() => navigate('/bills')}>
           Cancel
         </Button>
-        <Button
-          variant="secondary"
-          loading={isSaving}
-          onClick={handleSave}
-        >
+        <Button variant="secondary" loading={isSaving} onClick={handleSave}>
           Save Draft
         </Button>
-        <Button
-          variant="primary"
-          loading={isSaving}
-          onClick={handleSaveAndDownload}
-        >
+        <Button variant="primary" loading={isSaving} onClick={handleSaveAndDownload}>
           Save & Download PDF
         </Button>
       </div>

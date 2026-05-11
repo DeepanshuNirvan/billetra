@@ -25,11 +25,42 @@ export interface CreateBillPayload {
   isInterstate: boolean;
 }
 
+function toSnakePayload(payload: Partial<CreateBillPayload>) {
+  return {
+    customer_id: payload.customerId || undefined,
+    account_id: payload.accountId || undefined,
+    bill_date: payload.billDate,
+    due_date: payload.dueDate || undefined,
+    bill_size: payload.billSize,
+    template: payload.template,
+    discount_type: payload.discountType,
+    discount_value: payload.discountValue,
+    notes: payload.notes,
+    is_interstate: payload.isInterstate,
+    items: payload.items?.map((item) => ({
+      product_id: (item as { productId?: string }).productId || undefined,
+      name: item.name,
+      hsn_code: (item as { hsnCode?: string }).hsnCode ?? '',
+      quantity: item.quantity,
+      unit: item.unit ?? '',
+      price: item.price,
+      discount_type: item.discountType,
+      discount_value: item.discountValue,
+      gst_rate: item.gstRate,
+    })),
+  };
+}
+
 export const billsApi = {
   list: async (filters: BillFilters = {}): Promise<PaginatedResponse<Bill>> => {
-    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Bill>>>('/bills', {
-      params: filters,
-    });
+    const { startDate, endDate, customerId, ...rest } = filters;
+    const params = {
+      ...rest,
+      from: startDate,
+      to: endDate,
+      customer_id: customerId,
+    };
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Bill>>>('/bills', { params });
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;
   },
@@ -41,13 +72,13 @@ export const billsApi = {
   },
 
   create: async (payload: CreateBillPayload): Promise<Bill> => {
-    const { data } = await apiClient.post<ApiResponse<Bill>>('/bills', payload);
+    const { data } = await apiClient.post<ApiResponse<Bill>>('/bills', toSnakePayload(payload));
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;
   },
 
   update: async (id: string, payload: Partial<CreateBillPayload>): Promise<Bill> => {
-    const { data } = await apiClient.put<ApiResponse<Bill>>(`/bills/${id}`, payload);
+    const { data } = await apiClient.put<ApiResponse<Bill>>(`/bills/${id}`, toSnakePayload(payload));
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;
   },
@@ -57,7 +88,7 @@ export const billsApi = {
   },
 
   markPaid: async (id: string, paidAmount: number): Promise<Bill> => {
-    const { data } = await apiClient.post<ApiResponse<Bill>>(`/bills/${id}/mark-paid`, { paidAmount });
+    const { data } = await apiClient.put<ApiResponse<Bill>>(`/bills/${id}/mark-paid`, { paid_amount: paidAmount });
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;
   },

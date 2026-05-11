@@ -1,7 +1,7 @@
 -- +goose Up
 -- Seed a demo user (password: Demo@1234)
 INSERT INTO users (id, email, password_hash, name, phone) VALUES
-('00000000-0000-0000-0000-000000000001', 'demo@billetra.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyGrAcN0e', 'Demo Business', '9876543210');
+('00000000-0000-0000-0000-000000000001', 'demo@billetra.com', '$2a$10$nXU2NxWtzHpzr3ANIr3URuqsn8pWi6AFRU0tCWMMW3NxnOFjHHJMu', 'Demo Business', '9876543210');
 
 INSERT INTO businesses (user_id, name, gstin, phone, email, address, city, state, pincode, invoice_prefix) VALUES
 ('00000000-0000-0000-0000-000000000001', 'Demo Traders', '29ABCDE1234F1Z5', '9876543210', 'demo@billetra.com', '123 Market Street', 'Bangalore', 'Karnataka', '560001', 'INV');

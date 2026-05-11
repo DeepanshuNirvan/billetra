@@ -12,9 +12,14 @@ export interface ProductFilters {
 
 export const productsApi = {
   list: async (filters: ProductFilters = {}): Promise<PaginatedResponse<Product>> => {
-    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>('/products', {
-      params: filters,
-    });
+    const { isActive, categoryId, lowStock, ...rest } = filters;
+    const params = {
+      ...rest,
+      is_active: isActive,
+      category_id: categoryId,
+      low_stock: lowStock,
+    };
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>('/products', { params });
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;
   },
@@ -51,7 +56,7 @@ export const productsApi = {
   },
 
   categories: async (): Promise<Category[]> => {
-    const { data } = await apiClient.get<ApiResponse<Category[]>>('/products/categories');
+    const { data } = await apiClient.get<ApiResponse<Category[]>>('/categories');
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;
   },

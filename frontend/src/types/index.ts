@@ -206,7 +206,7 @@ export interface SignupPayload {
 }
 
 export interface AuthResponse {
-  token: string;
+  access_token: string;
   user: User;
   business?: Business;
 }

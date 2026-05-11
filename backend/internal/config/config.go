@@ -32,7 +32,7 @@ func Load() (*Config, error) {
 		DBPort:      getEnv("DB_PORT", "5432"),
 		DBUser:      getEnv("DB_USER", "postgres"),
 		DBPassword:  getEnv("DB_PASSWORD", "password"),
-		DBName:      getEnv("DB_NAME", "billetra"),
+		DBName:      getEnv("DB_NAME", "postgres"),
 		JWTSecret:   getEnv("JWT_SECRET", "change-me"),
 		Env:         getEnv("ENV", "development"),
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),

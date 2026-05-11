@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/layout/AppLayout';
 import { ThemeProvider } from './components/ThemeProvider';
 import { FullScreenSpinner } from './components/ui/Spinner';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuthStore } from './store/authStore';
 
 // Lazy-loaded pages
@@ -57,10 +58,11 @@ function RequireSuperAdmin({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Suspense fallback={<FullScreenSpinner />}>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Suspense fallback={<FullScreenSpinner />}>
             <Routes>
               {/* Guest routes */}
               <Route path="/login" element={<RequireGuest><Login /></RequireGuest>} />
@@ -108,9 +110,10 @@ export default function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ThemeProvider>
+            </Suspense>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
