@@ -198,3 +198,86 @@ func (h *BillHandler) GetPDF(c *fiber.Ctx) error {
 	c.Set("Content-Disposition", "inline; filename=\""+filename+"\"")
 	return c.Send(pdfBytes)
 }
+
+// Templates returns the list of selectable invoice templates.
+func (h *BillHandler) Templates(c *fiber.Ctx) error {
+	return utils.OK(c, services.Templates)
+}
+
+// Preview renders a PDF for an unsaved bill (live preview while editing).
+func (h *BillHandler) Preview(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+
+	var input services.CreateBillInput
+	if err := c.BodyParser(&input); err != nil {
+		return utils.BadRequest(c, "invalid request body")
+	}
+
+	bill, err := h.billService.BuildPreview(userID, input)
+	if err != nil {
+		return utils.BadRequest(c, err.Error())
+	}
+
+	var business models.Business
+	if err := h.db.Where("user_id = ?", userID).First(&business).Error; err != nil {
+		// fall back to a placeholder so preview still works pre-onboarding
+		business = models.Business{Name: "Your Business"}
+	}
+
+	pdfBytes, err := h.pdfService.GenerateBillPDF(bill, &business)
+	if err != nil {
+		log.Printf("preview pdf error: %v", err)
+		return utils.InternalError(c, "failed to generate preview")
+	}
+	c.Set("Content-Type", "application/pdf")
+	c.Set("Content-Disposition", "inline; filename=\"preview.pdf\"")
+	return c.Send(pdfBytes)
+}
+
+// TemplateSample renders a dummy bill so users can preview a template's look.
+// Uses the caller's own business details when available for realism.
+func (h *BillHandler) TemplateSample(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+	tpl := c.Query("template", "modern")
+
+	bill, sampleBiz := services.SampleBill()
+	bill.Template = tpl
+
+	business := *sampleBiz
+	var real models.Business
+	if err := h.db.Where("user_id = ?", userID).First(&real).Error; err == nil && real.Name != "" {
+		// keep sample customer/items, but show the real business identity
+		business.Name = real.Name
+		business.GSTIN = real.GSTIN
+		business.PAN = real.PAN
+		business.Phone = real.Phone
+		business.Email = real.Email
+		business.Address = real.Address
+		business.City = real.City
+		business.State = real.State
+		business.Pincode = real.Pincode
+	}
+
+	pdfBytes, err := h.pdfService.GenerateBillPDF(bill, &business)
+	if err != nil {
+		log.Printf("sample pdf error: %v", err)
+		return utils.InternalError(c, "failed to generate sample")
+	}
+	c.Set("Content-Type", "application/pdf")
+	c.Set("Content-Disposition", "inline; filename=\"sample.pdf\"")
+	return c.Send(pdfBytes)
+}
+
+// Cancel voids a bill (restores stock + balance, marks cancelled).
+func (h *BillHandler) Cancel(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+	id := c.Params("id")
+
+	bill, err := h.billService.Cancel(userID, id)
+	if err != nil {
+		log.Printf("cancel bill error: %v", err)
+		return utils.BadRequest(c, err.Error())
+	}
+	utils.LogAudit(h.db, userID, "bill", id, "cancel", c.IP(), nil, bill)
+	return utils.OK(c, bill)
+}

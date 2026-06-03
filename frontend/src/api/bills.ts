@@ -11,6 +11,13 @@ export interface BillFilters {
   limit?: number;
 }
 
+export interface TemplateInfo {
+  value: string;
+  label: string;
+  description: string;
+  accent: string;
+}
+
 export interface CreateBillPayload {
   customerId?: string;
   accountId?: string;
@@ -102,6 +109,29 @@ export const billsApi = {
   downloadPdf: async (id: string): Promise<Blob> => {
     const { data } = await apiClient.get(`/bills/${id}/pdf`, { responseType: 'blob' });
     return data;
+  },
+
+  // Render a PDF for an unsaved bill (live preview while editing).
+  previewPdf: async (payload: Partial<CreateBillPayload>): Promise<Blob> => {
+    const { data } = await apiClient.post('/bills/preview', toSnakePayload(payload), {
+      responseType: 'blob',
+    });
+    return data;
+  },
+
+  // Render a dummy bill so users can preview a template's look.
+  samplePdf: async (template: string): Promise<Blob> => {
+    const { data } = await apiClient.get('/bills/template-sample', {
+      params: { template },
+      responseType: 'blob',
+    });
+    return data;
+  },
+
+  templates: async (): Promise<TemplateInfo[]> => {
+    const { data } = await apiClient.get<ApiResponse<TemplateInfo[]>>('/bills/templates');
+    if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
+    return data.data;
   },
 
   cancel: async (id: string): Promise<Bill> => {

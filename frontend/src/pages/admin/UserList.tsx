@@ -95,7 +95,12 @@ export default function AdminUserList() {
           action={{ label: 'Create User', onClick: () => navigate('/admin/users/create') }}
         />
       ) : (
-        <Table columns={columns} data={users} keyExtractor={(u) => u.id} />
+        <Table
+          columns={columns}
+          data={users}
+          keyExtractor={(u) => u.id}
+          onRowClick={(u) => navigate(`/admin/users/${u.id}`)}
+        />
       )}
     </div>
   );

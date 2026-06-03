@@ -12,7 +12,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (payload: LoginPayload) => authApi.login(payload),
     onSuccess: (data) => {
-      login(data.access_token, data.user, data.business);
+      login(data.accessToken, data.user, data.business);
       toast.success('Welcome back!', `Logged in as ${data.user.name}`);
       navigate('/');
     },
@@ -29,7 +29,7 @@ export function useSignup() {
   return useMutation({
     mutationFn: (payload: SignupPayload) => authApi.signup(payload),
     onSuccess: (data) => {
-      login(data.access_token, data.user, data.business);
+      login(data.accessToken, data.user, data.business);
       toast.success('Account created!', 'Welcome to Billetra');
       navigate('/');
     },

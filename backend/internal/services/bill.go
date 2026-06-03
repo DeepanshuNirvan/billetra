@@ -513,3 +513,123 @@ func (s *BillService) Duplicate(userID, billID string) (*models.Bill, error) {
 
 	return s.Create(userID, input)
 }
+
+// BuildPreview computes a bill (with totals) from input WITHOUT persisting it.
+// Used to render a live PDF preview before the bill is saved.
+func (s *BillService) BuildPreview(userID string, input CreateBillInput) (*models.Bill, error) {
+	billDate := time.Now()
+	if input.BillDate != "" {
+		if d, err := time.Parse("2006-01-02", input.BillDate); err == nil {
+			billDate = d
+		}
+	}
+	var dueDate *time.Time
+	if input.DueDate != nil && *input.DueDate != "" {
+		if d, err := time.Parse("2006-01-02", *input.DueDate); err == nil {
+			dueDate = &d
+		}
+	}
+
+	b := &models.Bill{
+		InvoiceNumber: "PREVIEW",
+		BillDate:      billDate,
+		DueDate:       dueDate,
+		Status:        "pending",
+		Notes:         input.Notes,
+		IsInterstate:  input.IsInterstate,
+		DiscountType:  input.DiscountType,
+		DiscountValue: input.DiscountValue,
+		Template:      input.Template,
+		BillSize:      input.BillSize,
+	}
+
+	var items []models.BillItem
+	var subtotal, totalTaxable, totalTax float64
+	for _, in := range input.Items {
+		item := models.BillItem{
+			Name: in.Name, HSNCode: in.HSNCode, Quantity: in.Quantity, Unit: in.Unit,
+			Price: in.Price, DiscountType: in.DiscountType, DiscountValue: in.DiscountValue, GSTRate: in.GSTRate,
+		}
+		line := item.Price * item.Quantity
+		var disc float64
+		if item.DiscountType == "percent" {
+			disc = line * item.DiscountValue / 100
+		} else {
+			disc = item.DiscountValue
+		}
+		item.DiscountAmount = disc
+		taxable := line - disc
+		item.GSTAmount = taxable * item.GSTRate / 100
+		item.Total = taxable + item.GSTAmount
+		subtotal += line
+		totalTaxable += taxable
+		totalTax += item.GSTAmount
+		items = append(items, item)
+	}
+
+	var billDisc float64
+	if input.DiscountType == "percent" {
+		billDisc = subtotal * input.DiscountValue / 100
+	} else {
+		billDisc = input.DiscountValue
+	}
+	finalTaxable := totalTaxable - billDisc
+	if finalTaxable < 0 {
+		finalTaxable = 0
+	}
+	b.BillItems = items
+	b.Subtotal = subtotal
+	b.DiscountAmount = billDisc
+	b.TaxableAmount = finalTaxable
+	b.TotalTax = totalTax
+	b.TotalAmount = finalTaxable + totalTax
+	if input.IsInterstate {
+		b.IGSTAmount = totalTax
+	} else {
+		b.CGSTAmount = totalTax / 2
+		b.SGSTAmount = totalTax / 2
+	}
+
+	if input.CustomerID != nil && *input.CustomerID != "" {
+		if cust, err := s.customerRepo.FindByID(*input.CustomerID, userID); err == nil {
+			b.Customer = cust
+		}
+	}
+	return b, nil
+}
+
+// Cancel voids a bill: restores stock and customer balance, marks it cancelled.
+func (s *BillService) Cancel(userID, billID string) (*models.Bill, error) {
+	bill, err := s.billRepo.FindByID(billID, userID)
+	if err != nil {
+		return nil, errors.New("bill not found")
+	}
+	if bill.Status == "cancelled" {
+		return bill, nil
+	}
+
+	db := s.billRepo.GetDB()
+	txErr := db.Transaction(func(tx *gorm.DB) error {
+		for _, item := range bill.BillItems {
+			if item.ProductID != nil {
+				if err := s.productRepo.RestoreStock(tx, item.ProductID.String(), userID, item.Quantity); err != nil {
+					return err
+				}
+			}
+		}
+		if bill.CustomerID != nil {
+			remaining := bill.TotalAmount - bill.PaidAmount
+			if remaining != 0 {
+				if err := s.customerRepo.UpdateOutstandingBalance(tx, bill.CustomerID.String(), -remaining); err != nil {
+					return err
+				}
+			}
+		}
+		bill.Status = "cancelled"
+		return s.billRepo.Update(tx, bill)
+	})
+	if txErr != nil {
+		return nil, txErr
+	}
+	return bill, nil
+}

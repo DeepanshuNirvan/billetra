@@ -5,21 +5,20 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { BillPreview } from '../../components/bills/BillPreview';
+import { PdfFrame } from '../../components/bills/PdfFrame';
+import { billsApi } from '../../api/bills';
+import { downloadSavedBillPdf, printSavedBillPdf } from '../../utils/billPdf';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { BillStatusBadge } from '../../components/ui/Badge';
 import { AuditHistory } from '../../components/audit/AuditHistory';
 import { useBill, useMarkBillPaid, useDuplicateBill, useCancelBill } from '../../hooks/useBills';
-import { useAuthStore } from '../../store/authStore';
-import { downloadBillPdf } from '../../utils/pdfGenerator';
 import { formatCurrency, formatDate } from '../../utils/format';
 
 export default function BillDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { business } = useAuthStore();
   const { data: bill, isLoading } = useBill(id!);
   const markPaid = useMarkBillPaid();
   const duplicate = useDuplicateBill();
@@ -33,7 +32,7 @@ export default function BillDetail() {
   if (isLoading) return <PageSpinner />;
   if (!bill) return <div className="p-6 text-center text-gray-500">Bill not found</div>;
 
-  const handleDownload = () => downloadBillPdf(bill, business);
+  const handleDownload = () => downloadSavedBillPdf(bill.id, bill.invoiceNumber);
 
   const handleMarkPaid = async () => {
     const amount = parseFloat(paidAmount) || bill.totalAmount;
@@ -51,20 +50,7 @@ export default function BillDetail() {
     setShowCancelConfirm(false);
   };
 
-  const handlePrint = () => {
-    const content = document.getElementById('bill-preview');
-    if (!content) return;
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <html><head><title>Invoice #${bill.invoiceNumber}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-      <style>body{font-family:Inter,sans-serif;margin:0;padding:20px}</style>
-      </head><body>${content.outerHTML}</body></html>
-    `);
-    win.document.close();
-    win.print();
-  };
+  const handlePrint = () => printSavedBillPdf(bill.id);
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto">
@@ -181,9 +167,12 @@ export default function BillDetail() {
       </div>
 
       {activeTab === 'details' && (
-        <div className="overflow-x-auto">
-          <BillPreview bill={bill} business={business} />
-        </div>
+        <PdfFrame
+          load={() => billsApi.downloadPdf(bill.id)}
+          reloadKey={`${bill.id}-${bill.template}-${bill.status}`}
+          title={`Invoice ${bill.invoiceNumber}`}
+          className="h-[80vh] border border-gray-200"
+        />
       )}
       {activeTab === 'history' && (
         <Card>

@@ -2,7 +2,7 @@ import { Card, CardHeader } from '../ui/Card';
 import { formatCurrency } from '../../utils/format';
 
 interface Props {
-  customers: { name: string; total_amount: number; total_bills: number }[];
+  customers: { name: string; totalAmount: number; totalBills: number }[];
 }
 
 export function TopCustomersWidget({ customers }: Props) {
@@ -22,11 +22,11 @@ export function TopCustomersWidget({ customers }: Props) {
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
-                <p className="text-xs text-gray-400">{c.total_bills} bills</p>
+                <p className="text-xs text-gray-400">{c.totalBills} bills</p>
               </div>
             </div>
             <span className="text-sm font-semibold text-primary-700 ml-3 flex-shrink-0">
-              {formatCurrency(c.total_amount)}
+              {formatCurrency(c.totalAmount)}
             </span>
           </div>
         ))}

@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, AlertCircle, Info } from 'lucide-react';
+import { Plus, AlertCircle, Info, Eye, LayoutTemplate } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Card } from '../ui/Card';
+import { Modal } from '../ui/Modal';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { BillItemRow } from './BillItemRow';
 import { BillTemplates } from './BillTemplates';
+import { PdfPreviewModal } from './PdfPreviewModal';
+import { billsApi } from '../../api/bills';
 import { useProducts } from '../../hooks/useProducts';
 import { useCustomers } from '../../hooks/useCustomers';
 import { useAccounts } from '../../hooks/useAccounts';
@@ -18,7 +21,7 @@ import { formatCurrency, formatDateInput } from '../../utils/format';
 import { BILL_SIZES, BILL_TEMPLATES, GST_RATES } from '../../utils/constants';
 import type { Bill, BillItem } from '../../types';
 import { format } from 'date-fns';
-import { downloadBillPdf } from '../../utils/pdfGenerator';
+import { downloadSavedBillPdf } from '../../utils/billPdf';
 
 interface BillFormProps {
   existingBill?: Bill;
@@ -56,14 +59,15 @@ export function BillForm({ existingBill }: BillFormProps) {
     existingBill ? formatDateInput(existingBill.billDate) : format(new Date(), 'yyyy-MM-dd')
   );
   const [dueDate, setDueDate] = useState(formatDateInput(existingBill?.dueDate ?? null));
-  const [billSize, setBillSize] = useState(existingBill?.billSize ?? business?.defaultBillSize ?? 'A4_PORTRAIT');
-  const [template, setTemplate] = useState(existingBill?.template ?? business?.defaultTemplate ?? 'MODERN_MINIMAL');
+  const [billSize, setBillSize] = useState(existingBill?.billSize ?? business?.defaultBillSize ?? 'a4_portrait');
+  const [template, setTemplate] = useState(existingBill?.template ?? business?.defaultTemplate ?? 'modern');
   const [items, setItems] = useState<BillItem[]>(existingBill?.items ?? [emptyItem()]);
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>(existingBill?.discountType ?? 'percent');
   const [discountValue, setDiscountValue] = useState(existingBill?.discountValue ?? 0);
   const [notes, setNotes] = useState(existingBill?.notes ?? '');
   const [isInterstate, setIsInterstate] = useState(existingBill?.isInterstate ?? false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // GST on whole bill
@@ -156,7 +160,11 @@ export function BillForm({ existingBill }: BillFormProps) {
     } else {
       bill = await createBill.mutateAsync(payload);
     }
-    downloadBillPdf(bill, business);
+    try {
+      await downloadSavedBillPdf(bill.id, bill.invoiceNumber);
+    } catch {
+      /* download failure shouldn't block navigation */
+    }
     navigate('/bills');
   };
 
@@ -225,9 +233,10 @@ export function BillForm({ existingBill }: BillFormProps) {
               type="button"
               variant="outline"
               size="md"
-              onClick={() => setShowTemplates(!showTemplates)}
+              leftIcon={<LayoutTemplate className="h-4 w-4" />}
+              onClick={() => setShowTemplates(true)}
             >
-              Preview
+              Browse
             </Button>
           </div>
         </div>
@@ -242,12 +251,26 @@ export function BillForm({ existingBill }: BillFormProps) {
         />
       </div>
 
-      {showTemplates && (
-        <Card>
-          <p className="text-sm font-semibold text-gray-700 mb-4">Choose Template</p>
-          <BillTemplates value={template} onChange={(t) => { setTemplate(t); setShowTemplates(false); }} />
-        </Card>
-      )}
+      <Modal
+        open={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        title="Choose a Template"
+        description="Preview each design with your business details, then select one."
+        size="5xl"
+      >
+        <BillTemplates value={template} onChange={(t) => { setTemplate(t); setShowTemplates(false); }} />
+      </Modal>
+
+      <PdfPreviewModal
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+        title="Invoice Preview"
+        reloadKey={`${template}-${billSize}-${JSON.stringify(buildPayload())}`}
+        load={() => billsApi.previewPdf(buildPayload())}
+        footer={
+          <Button variant="outline" onClick={() => setShowPreview(false)}>Close</Button>
+        }
+      />
 
       {/* Toggles row */}
       <div className="flex flex-wrap items-center gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
@@ -456,9 +479,16 @@ export function BillForm({ existingBill }: BillFormProps) {
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-end gap-3 pb-6">
+      <div className="flex flex-wrap items-center justify-end gap-3 pb-6">
         <Button variant="outline" onClick={() => navigate('/bills')}>
           Cancel
+        </Button>
+        <Button
+          variant="outline"
+          leftIcon={<Eye className="h-4 w-4" />}
+          onClick={() => setShowPreview(true)}
+        >
+          Preview
         </Button>
         <Button variant="secondary" loading={isSaving} onClick={handleSave}>
           Save Draft

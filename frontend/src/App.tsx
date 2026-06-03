@@ -26,6 +26,7 @@ const InventoryReport = lazy(() => import('./pages/reports/InventoryReport'));
 const BusinessSettings = lazy(() => import('./pages/settings/BusinessSettings'));
 const AdminUserList = lazy(() => import('./pages/admin/UserList'));
 const CreateAdminUser = lazy(() => import('./pages/admin/CreateUser'));
+const AdminUserDetail = lazy(() => import('./pages/admin/UserDetail'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +106,7 @@ export default function App() {
                 <Route path="admin">
                   <Route path="users" element={<AdminUserList />} />
                   <Route path="users/create" element={<CreateAdminUser />} />
+                  <Route path="users/:id" element={<AdminUserDetail />} />
                 </Route>
               </Route>
 

@@ -6,19 +6,30 @@ export const UNIT_TYPES = [
 ];
 
 export const BILL_SIZES = [
-  { value: 'A4_PORTRAIT', label: 'A4 Portrait' },
-  { value: 'A4_LANDSCAPE', label: 'A4 Landscape' },
-  { value: 'HALF_A4', label: 'Half A4' },
-  { value: 'THERMAL_3', label: '3-inch Thermal' },
-  { value: 'THERMAL_4', label: '4-inch Thermal' },
+  { value: 'a4_portrait', label: 'A4 Portrait' },
+  { value: 'a4_landscape', label: 'A4 Landscape' },
+  { value: 'half_a4', label: 'Half A4' },
+  { value: 'thermal_3', label: '3-inch Thermal' },
+  { value: 'thermal_4', label: '4-inch Thermal' },
 ];
 
-export const BILL_TEMPLATES = [
-  { value: 'MODERN_MINIMAL', label: 'Modern Minimal' },
-  { value: 'CLASSIC_GST', label: 'Classic GST' },
-  { value: 'RETAIL_COMPACT', label: 'Retail Compact' },
-  { value: 'THERMAL', label: 'Thermal' },
-  { value: 'CORPORATE', label: 'Corporate' },
+// Canonical template slugs — must match backend services.Templates.
+export interface BillTemplateOption {
+  value: string;
+  label: string;
+  description: string;
+  accent: string;
+}
+
+export const BILL_TEMPLATES: BillTemplateOption[] = [
+  { value: 'modern', label: 'Modern', description: 'Clean indigo accent, zebra rows. Great default.', accent: '#4f46e5' },
+  { value: 'classic_gst', label: 'Classic GST', description: 'Formal bordered tax invoice with CGST/SGST columns.', accent: '#1e3a8a' },
+  { value: 'corporate', label: 'Corporate', description: 'Bold full-width colour header band.', accent: '#0f766e' },
+  { value: 'elegant', label: 'Elegant B/W', description: 'Refined black & white, hairline rules.', accent: '#111827' },
+  { value: 'retail', label: 'Retail Compact', description: 'Dense compact layout for quick counter bills.', accent: '#b91c1c' },
+  { value: 'thermal', label: 'Thermal 80mm', description: 'Narrow thermal-printer receipt.', accent: '#374151' },
+  { value: 'royal', label: 'Royal', description: 'Navy & gold double-frame premium look.', accent: '#1e3a8a' },
+  { value: 'minimal', label: 'Minimal', description: 'Ultra-clean, lots of whitespace, single accent line.', accent: '#0ea5e9' },
 ];
 
 export const INDIAN_STATES = [
@@ -42,6 +53,7 @@ export const ACCOUNT_TYPES = [
 
 export const BILL_STATUS_LABELS: Record<string, string> = {
   pending: 'Pending',
+  partial: 'Partial',
   paid: 'Paid',
   overdue: 'Overdue',
   cancelled: 'Cancelled',
@@ -49,6 +61,7 @@ export const BILL_STATUS_LABELS: Record<string, string> = {
 
 export const BILL_STATUS_COLORS: Record<string, string> = {
   pending: 'yellow',
+  partial: 'blue',
   paid: 'green',
   overdue: 'red',
   cancelled: 'gray',

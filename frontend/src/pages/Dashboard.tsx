@@ -34,12 +34,12 @@ export default function Dashboard() {
   }
 
   const todayTrend =
-    data.yesterday_sales > 0
-      ? Math.round(((data.today_sales - data.yesterday_sales) / data.yesterday_sales) * 100)
+    data.yesterdaySales > 0
+      ? Math.round(((data.todaySales - data.yesterdaySales) / data.yesterdaySales) * 100)
       : 0;
   const monthTrend =
-    data.last_month_sales > 0
-      ? Math.round(((data.month_sales - data.last_month_sales) / data.last_month_sales) * 100)
+    data.lastMonthSales > 0
+      ? Math.round(((data.monthSales - data.lastMonthSales) / data.lastMonthSales) * 100)
       : 0;
 
   return (
@@ -61,28 +61,28 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Today's Sales"
-          value={formatCurrency(data.today_sales)}
+          value={formatCurrency(data.todaySales)}
           icon={TrendingUp}
           color="indigo"
           trend={{ value: todayTrend, label: 'vs yesterday' }}
         />
         <StatCard
           title="Month Sales"
-          value={formatCurrency(data.month_sales)}
+          value={formatCurrency(data.monthSales)}
           icon={Calendar}
           color="emerald"
           trend={{ value: monthTrend, label: 'vs last month' }}
         />
         <StatCard
           title="Outstanding"
-          value={formatCurrency(data.total_outstanding)}
-          subtitle={`${data.pending_bills} pending bills`}
+          value={formatCurrency(data.totalOutstanding)}
+          subtitle={`${data.pendingBills} pending bills`}
           icon={Receipt}
           color="amber"
         />
         <StatCard
           title="GST Collected"
-          value={formatCurrency(data.gst_collected)}
+          value={formatCurrency(data.gstCollected)}
           subtitle="This month"
           icon={FileText}
           color="rose"
@@ -92,15 +92,15 @@ export default function Dashboard() {
       {/* Sales trend + Bill summary */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <SalesChart data={data.sales_chart ?? []} />
+          <SalesChart data={data.salesChart ?? []} />
         </div>
         <Card>
           <CardHeader title="Bill Summary" />
           <div className="space-y-4">
             {[
-              { label: 'Total Bills', value: data.total_bills, color: 'text-gray-900' },
-              { label: 'Paid',        value: data.paid_bills,    color: 'text-green-600' },
-              { label: 'Pending',     value: data.pending_bills, color: 'text-yellow-600' },
+              { label: 'Total Bills', value: data.totalBills,   color: 'text-gray-900' },
+              { label: 'Paid',        value: data.paidBills,    color: 'text-green-600' },
+              { label: 'Pending',     value: data.pendingBills, color: 'text-yellow-600' },
             ].map(({ label, value, color }) => (
               <div key={label} className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">{label}</span>
@@ -112,13 +112,13 @@ export default function Dashboard() {
                 <div
                   className="bg-primary-600 h-2 rounded-full transition-all"
                   style={{
-                    width: `${data.total_bills > 0 ? (data.paid_bills / data.total_bills) * 100 : 0}%`,
+                    width: `${data.totalBills > 0 ? (data.paidBills / data.totalBills) * 100 : 0}%`,
                   }}
                 />
               </div>
               <p className="text-xs text-gray-400 mt-1">
-                {data.total_bills > 0
-                  ? Math.round((data.paid_bills / data.total_bills) * 100)
+                {data.totalBills > 0
+                  ? Math.round((data.paidBills / data.totalBills) * 100)
                   : 0}
                 % collection rate
               </p>
@@ -129,8 +129,8 @@ export default function Dashboard() {
 
       {/* Monthly Revenue + Overdue Aging */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MonthlyRevenueChart data={data.monthly_revenue ?? []} />
-        <OverdueAgingWidget aging={data.overdue_aging ?? null} />
+        <MonthlyRevenueChart data={data.monthlyRevenue ?? []} />
+        <OverdueAgingWidget aging={data.overdueAging ?? null} />
       </div>
 
       {/* Recent Bills + Low Stock */}
@@ -143,26 +143,26 @@ export default function Dashboard() {
                 View all
               </Button>
             </div>
-            {data.recent_bills.length === 0 ? (
+            {(data.recentBills ?? []).length === 0 ? (
               <div className="py-12 text-center text-gray-400 text-sm">No bills yet</div>
             ) : (
               <div className="divide-y divide-gray-50">
-                {data.recent_bills.map((bill) => (
+                {(data.recentBills ?? []).map((bill) => (
                   <div
                     key={bill.id}
                     className="flex items-center justify-between px-5 py-3 hover:bg-surface-alt cursor-pointer transition-colors"
                     onClick={() => navigate(`/bills/${bill.id}`)}
                   >
                     <div>
-                      <p className="text-sm font-medium text-gray-900">#{bill.invoice_number}</p>
+                      <p className="text-sm font-medium text-gray-900">#{bill.invoiceNumber}</p>
                       <p className="text-xs text-gray-400">
-                        {bill.customer_name || 'Walk-in'} • {formatDate(bill.bill_date)}
+                        {bill.customerName || 'Walk-in'} • {formatDate(bill.billDate)}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <BillStatusBadge status={bill.status as any} />
                       <span className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(bill.total_amount)}
+                        {formatCurrency(bill.totalAmount)}
                       </span>
                     </div>
                   </div>
@@ -175,18 +175,18 @@ export default function Dashboard() {
         <Card padding="none">
           <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">Low Stock</h3>
-            {data.low_stock_products?.length > 0 && (
+            {data.lowStockProducts?.length > 0 && (
               <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
                 <AlertTriangle className="h-3.5 w-3.5" />
-                {data.low_stock_products.length} items
+                {data.lowStockProducts.length} items
               </span>
             )}
           </div>
-          {!data.low_stock_products?.length ? (
+          {!data.lowStockProducts?.length ? (
             <div className="py-12 text-center text-gray-400 text-sm">All stock levels OK</div>
           ) : (
             <div className="divide-y divide-gray-50">
-              {data.low_stock_products.slice(0, 6).map((p) => (
+              {data.lowStockProducts.slice(0, 6).map((p) => (
                 <div key={p.id} className="flex items-center justify-between px-5 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
@@ -208,7 +208,7 @@ export default function Dashboard() {
 
       {/* Top Products + Top Customers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {data.top_products?.length > 0 && (
+        {data.topProducts?.length > 0 && (
           <Card>
             <CardHeader title="Top Products" subtitle="By revenue this month" />
             <div className="overflow-x-auto">
@@ -221,12 +221,12 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data.top_products.map((p, i) => (
+                  {data.topProducts.map((p, i) => (
                     <tr key={i}>
                       <td className="py-3 font-medium text-gray-900">{p.name}</td>
-                      <td className="py-3 text-right text-gray-600">{p.total_qty}</td>
+                      <td className="py-3 text-right text-gray-600">{p.totalQty}</td>
                       <td className="py-3 text-right font-semibold text-primary-700">
-                        {formatCurrency(p.total_revenue)}
+                        {formatCurrency(p.totalRevenue)}
                       </td>
                     </tr>
                   ))}
@@ -235,7 +235,7 @@ export default function Dashboard() {
             </div>
           </Card>
         )}
-        <TopCustomersWidget customers={data.top_customers ?? []} />
+        <TopCustomersWidget customers={data.topCustomers ?? []} />
       </div>
     </div>
   );

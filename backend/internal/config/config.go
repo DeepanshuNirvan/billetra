@@ -14,6 +14,7 @@ type Config struct {
 	DBUser      string
 	DBPassword  string
 	DBName      string
+	DBSSLMode   string
 	DBDSN       string
 	JWTSecret   string
 	Env         string
@@ -33,14 +34,15 @@ func Load() (*Config, error) {
 		DBUser:      getEnv("DB_USER", "postgres"),
 		DBPassword:  getEnv("DB_PASSWORD", "password"),
 		DBName:      getEnv("DB_NAME", "postgres"),
+		DBSSLMode:   getEnv("DB_SSLMODE", "disable"),
 		JWTSecret:   getEnv("JWT_SECRET", "change-me"),
 		Env:         getEnv("ENV", "development"),
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
 	}
 
 	cfg.DBDSN = fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Kolkata",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName,
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=Asia/Kolkata",
+		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBSSLMode,
 	)
 
 	AppConfig = cfg

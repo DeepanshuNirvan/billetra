@@ -44,7 +44,7 @@ func main() {
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(authService)
-	adminHandler := handlers.NewAdminHandler(userRepo, authService)
+	adminHandler := handlers.NewAdminHandler(userRepo, authService, productRepo, customerRepo, billRepo)
 	auditHandler := handlers.NewAuditHandler(db)
 	businessHandler := handlers.NewBusinessHandler(db)
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo)
@@ -121,13 +121,17 @@ func main() {
 	protected.Delete("/accounts/:id", accountHandler.Delete)
 	protected.Put("/accounts/:id/set-default", accountHandler.SetDefault)
 
-	// Bills
+	// Bills — static paths must precede /bills/:id
+	protected.Get("/bills/templates", billHandler.Templates)
+	protected.Get("/bills/template-sample", billHandler.TemplateSample)
+	protected.Post("/bills/preview", billHandler.Preview)
 	protected.Get("/bills", billHandler.List)
 	protected.Post("/bills", billHandler.Create)
 	protected.Get("/bills/:id", billHandler.GetByID)
 	protected.Put("/bills/:id", billHandler.Update)
 	protected.Delete("/bills/:id", billHandler.Delete)
 	protected.Post("/bills/:id/duplicate", billHandler.Duplicate)
+	protected.Post("/bills/:id/cancel", billHandler.Cancel)
 	protected.Get("/bills/:id/pdf", billHandler.GetPDF)
 	protected.Put("/bills/:id/mark-paid", billHandler.MarkPaid)
 
@@ -148,6 +152,10 @@ func main() {
 	admin.Post("/users", adminHandler.CreateUser)
 	admin.Get("/users/:id", adminHandler.GetUser)
 	admin.Put("/users/:id", adminHandler.UpdateUser)
+	admin.Get("/users/:id/products", adminHandler.GetUserProducts)
+	admin.Get("/users/:id/customers", adminHandler.GetUserCustomers)
+	admin.Get("/users/:id/bills", adminHandler.GetUserBills)
+	admin.Get("/users/:id/stats", adminHandler.GetUserStats)
 
 	log.Printf("Billetra backend starting on port %s", cfg.Port)
 	if err := app.Listen(":" + cfg.Port); err != nil {

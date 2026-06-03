@@ -44,8 +44,15 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // Response interceptor – transform snake_case → camelCase, handle 401
 apiClient.interceptors.response.use(
   (response) => {
-    if (response.data && typeof response.data === 'object') {
-      response.data = transformKeys(response.data);
+    // Only transform plain JSON payloads. Binary responses (PDF blobs, etc.)
+    // must pass through untouched, otherwise the Blob is destroyed.
+    const d = response.data;
+    const isBinary =
+      d instanceof Blob ||
+      d instanceof ArrayBuffer ||
+      (typeof d === 'object' && d !== null && d.constructor !== Object && !Array.isArray(d));
+    if (d && typeof d === 'object' && !isBinary) {
+      response.data = transformKeys(d);
     }
     return response;
   },

@@ -48,8 +48,8 @@ export default function BusinessSettings() {
       state: business?.state ?? '',
       pincode: business?.pincode ?? '',
       invoicePrefix: business?.invoicePrefix ?? 'INV',
-      defaultTemplate: business?.defaultTemplate ?? 'MODERN_MINIMAL',
-      defaultBillSize: business?.defaultBillSize ?? 'A4_PORTRAIT',
+      defaultTemplate: business?.defaultTemplate ?? 'modern',
+      defaultBillSize: business?.defaultBillSize ?? 'a4_portrait',
     },
   });
 

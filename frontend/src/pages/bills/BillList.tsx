@@ -9,14 +9,14 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { useBills } from '../../hooks/useBills';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { billsApi } from '../../api/bills';
-import { downloadBillPdf } from '../../utils/pdfGenerator';
-import { useAuthStore } from '../../store/authStore';
+import { downloadSavedBillPdf } from '../../utils/billPdf';
 import type { Bill } from '../../types';
 import { toast } from '../../store/uiStore';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Status' },
   { value: 'pending', label: 'Pending' },
+  { value: 'partial', label: 'Partial' },
   { value: 'paid', label: 'Paid' },
   { value: 'overdue', label: 'Overdue' },
   { value: 'cancelled', label: 'Cancelled' },
@@ -24,7 +24,6 @@ const STATUS_OPTIONS = [
 
 export default function BillList() {
   const navigate = useNavigate();
-  const { business } = useAuthStore();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -48,8 +47,7 @@ export default function BillList() {
   const handleDownloadPdf = async (bill: Bill, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const fullBill = await billsApi.get(bill.id);
-      downloadBillPdf(fullBill, business);
+      await downloadSavedBillPdf(bill.id, bill.invoiceNumber);
     } catch {
       toast.error('Failed to download PDF');
     }
@@ -72,8 +70,7 @@ export default function BillList() {
       toast.info('Downloading PDFs', `Preparing ${queue.length} invoices…`);
       for (let i = 0; i < queue.length; i++) {
         try {
-          const fullBill = await billsApi.get(queue[i].id);
-          downloadBillPdf(fullBill, business);
+          await downloadSavedBillPdf(queue[i].id, queue[i].invoiceNumber);
           // Small delay to avoid browser blocking multiple downloads
           await new Promise((r) => setTimeout(r, 400));
         } catch {

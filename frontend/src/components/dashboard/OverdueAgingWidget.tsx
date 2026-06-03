@@ -3,10 +3,10 @@ import { formatCurrency } from '../../utils/format';
 
 interface Props {
   aging: {
-    days_0_30: number;
-    days_31_60: number;
-    days_61_90: number;
-    days_90_plus: number;
+    days030: number;
+    days3160: number;
+    days6190: number;
+    days90Plus: number;
   } | null;
 }
 
@@ -14,10 +14,10 @@ export function OverdueAgingWidget({ aging }: Props) {
   if (!aging) return null;
 
   const buckets = [
-    { label: '0–30 days',  value: aging.days_0_30,  color: 'bg-yellow-400' },
-    { label: '31–60 days', value: aging.days_31_60, color: 'bg-orange-400' },
-    { label: '61–90 days', value: aging.days_61_90, color: 'bg-red-400' },
-    { label: '90+ days',   value: aging.days_90_plus, color: 'bg-red-700' },
+    { label: '0–30 days',  value: aging.days030,   color: 'bg-yellow-400' },
+    { label: '31–60 days', value: aging.days3160,  color: 'bg-orange-400' },
+    { label: '61–90 days', value: aging.days6190,  color: 'bg-red-400' },
+    { label: '90+ days',   value: aging.days90Plus, color: 'bg-red-700' },
   ];
   const total = buckets.reduce((s, b) => s + b.value, 0);
 

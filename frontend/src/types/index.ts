@@ -109,7 +109,7 @@ export interface Bill {
   account?: Account;
   billDate: string;
   dueDate?: string;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  status: 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
   billSize: string;
   template: string;
   items: BillItem[];
@@ -131,33 +131,33 @@ export interface Bill {
 }
 
 export interface DashboardData {
-  today_sales: number;
-  yesterday_sales: number;
-  month_sales: number;
-  last_month_sales: number;
-  total_outstanding: number;
-  gst_collected: number;
-  total_bills: number;
-  paid_bills: number;
-  pending_bills: number;
-  top_products: { name: string; total_revenue: number; total_qty: number }[];
-  top_customers: { name: string; total_amount: number; total_bills: number }[];
-  recent_bills: {
+  todaySales: number;
+  yesterdaySales: number;
+  monthSales: number;
+  lastMonthSales: number;
+  totalOutstanding: number;
+  gstCollected: number;
+  totalBills: number;
+  paidBills: number;
+  pendingBills: number;
+  topProducts: { name: string; totalRevenue: number; totalQty: number }[];
+  topCustomers: { name: string; totalAmount: number; totalBills: number }[];
+  recentBills: {
     id: string;
-    invoice_number: string;
-    customer_name: string;
-    bill_date: string;
-    total_amount: number;
+    invoiceNumber: string;
+    customerName: string;
+    billDate: string;
+    totalAmount: number;
     status: string;
   }[];
-  low_stock_products: Product[];
-  sales_chart: { date: string; amount: number }[];
-  monthly_revenue: { month: string; amount: number }[];
-  overdue_aging: {
-    days_0_30: number;
-    days_31_60: number;
-    days_61_90: number;
-    days_90_plus: number;
+  lowStockProducts: Product[];
+  salesChart: { date: string; amount: number }[];
+  monthlyRevenue: { month: string; amount: number }[];
+  overdueAging: {
+    days030: number;
+    days3160: number;
+    days6190: number;
+    days90Plus: number;
   } | null;
 }
 
@@ -206,12 +206,12 @@ export interface SignupPayload {
 }
 
 export interface AuthResponse {
-  access_token: string;
+  accessToken: string;
   user: User;
   business?: Business;
 }
 
-export type BillStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
+export type BillStatus = 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 export type AccountType = 'bank' | 'upi' | 'cash' | 'current' | 'credit' | 'wallet';
 export type DiscountType = 'fixed' | 'percent';
 

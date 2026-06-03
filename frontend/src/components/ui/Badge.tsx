@@ -51,6 +51,7 @@ export function Badge({ color = 'gray', children, size = 'sm', dot = false, clas
 export function BillStatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, BadgeColor> = {
     pending: 'yellow',
+    partial: 'blue',
     paid: 'green',
     overdue: 'red',
     cancelled: 'gray',
@@ -58,6 +59,7 @@ export function BillStatusBadge({ status }: { status: string }) {
 
   const labelMap: Record<string, string> = {
     pending: 'Pending',
+    partial: 'Partial',
     paid: 'Paid',
     overdue: 'Overdue',
     cancelled: 'Cancelled',

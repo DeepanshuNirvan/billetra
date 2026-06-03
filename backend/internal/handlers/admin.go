@@ -11,13 +11,29 @@ import (
 )
 
 type AdminHandler struct {
-	userRepo    *repository.UserRepository
-	authService *services.AuthService
-	validate    *validator.Validate
+	userRepo     *repository.UserRepository
+	authService  *services.AuthService
+	productRepo  *repository.ProductRepository
+	customerRepo *repository.CustomerRepository
+	billRepo     *repository.BillRepository
+	validate     *validator.Validate
 }
 
-func NewAdminHandler(userRepo *repository.UserRepository, authService *services.AuthService) *AdminHandler {
-	return &AdminHandler{userRepo: userRepo, authService: authService, validate: validator.New()}
+func NewAdminHandler(
+	userRepo *repository.UserRepository,
+	authService *services.AuthService,
+	productRepo *repository.ProductRepository,
+	customerRepo *repository.CustomerRepository,
+	billRepo *repository.BillRepository,
+) *AdminHandler {
+	return &AdminHandler{
+		userRepo:     userRepo,
+		authService:  authService,
+		productRepo:  productRepo,
+		customerRepo: customerRepo,
+		billRepo:     billRepo,
+		validate:     validator.New(),
+	}
 }
 
 func (h *AdminHandler) ListUsers(c *fiber.Ctx) error {
@@ -83,4 +99,45 @@ func (h *AdminHandler) UpdateUser(c *fiber.Ctx) error {
 	}
 	user, _ := h.userRepo.FindByID(id)
 	return utils.OK(c, user)
+}
+
+// ── View any user's data (super_admin) ──────────────────────────────────────
+
+func (h *AdminHandler) GetUserProducts(c *fiber.Ctx) error {
+	target := c.Params("id")
+	p := utils.ParsePagination(c)
+	items, total, err := h.productRepo.List(target, c.Query("search"), c.Query("category"), p.Page, p.Limit)
+	if err != nil {
+		return utils.InternalError(c, "failed to fetch products")
+	}
+	return utils.OKPaginated(c, items, total, p.Page, p.Limit)
+}
+
+func (h *AdminHandler) GetUserCustomers(c *fiber.Ctx) error {
+	target := c.Params("id")
+	p := utils.ParsePagination(c)
+	items, total, err := h.customerRepo.List(target, c.Query("search"), p.Page, p.Limit)
+	if err != nil {
+		return utils.InternalError(c, "failed to fetch customers")
+	}
+	return utils.OKPaginated(c, items, total, p.Page, p.Limit)
+}
+
+func (h *AdminHandler) GetUserBills(c *fiber.Ctx) error {
+	target := c.Params("id")
+	p := utils.ParsePagination(c)
+	items, total, err := h.billRepo.List(target, c.Query("status"), c.Query("customer_id"), c.Query("search"), nil, nil, p.Page, p.Limit)
+	if err != nil {
+		return utils.InternalError(c, "failed to fetch bills")
+	}
+	return utils.OKPaginated(c, items, total, p.Page, p.Limit)
+}
+
+func (h *AdminHandler) GetUserStats(c *fiber.Ctx) error {
+	target := c.Params("id")
+	stats, err := h.billRepo.GetDashboardStats(target)
+	if err != nil {
+		return utils.InternalError(c, "failed to fetch stats")
+	}
+	return utils.OK(c, stats)
 }
