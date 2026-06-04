@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log"
+	"strings"
 
 	"github.com/billetra/backend/internal/models"
 	"github.com/billetra/backend/internal/utils"
@@ -58,6 +59,17 @@ func (h *BusinessHandler) Update(c *fiber.Ctx) error {
 		return utils.BadRequest(c, "invalid request body")
 	}
 
+	// Validate lengths before hitting the DB
+	if len(strings.TrimSpace(input.GSTIN)) > 20 {
+		return utils.BadRequest(c, "GSTIN must be at most 20 characters")
+	}
+	if len(strings.TrimSpace(input.PAN)) > 15 {
+		return utils.BadRequest(c, "PAN must be at most 15 characters")
+	}
+	if len(strings.TrimSpace(input.InvoicePrefix)) > 20 {
+		return utils.BadRequest(c, "invoice prefix must be at most 20 characters")
+	}
+
 	var business models.Business
 	err := h.db.Where("user_id = ?", userID).First(&business).Error
 	if err != nil {
@@ -69,35 +81,18 @@ func (h *BusinessHandler) Update(c *fiber.Ctx) error {
 	}
 
 	if input.Name != "" {
-		business.Name = input.Name
+		business.Name = strings.TrimSpace(input.Name)
 	}
-	if input.GSTIN != "" {
-		business.GSTIN = input.GSTIN
-	}
-	if input.PAN != "" {
-		business.PAN = input.PAN
-	}
-	if input.Phone != "" {
-		business.Phone = input.Phone
-	}
-	if input.Email != "" {
-		business.Email = input.Email
-	}
-	if input.Address != "" {
-		business.Address = input.Address
-	}
-	if input.City != "" {
-		business.City = input.City
-	}
-	if input.State != "" {
-		business.State = input.State
-	}
-	if input.Pincode != "" {
-		business.Pincode = input.Pincode
-	}
-	if input.LogoURL != "" {
-		business.LogoURL = input.LogoURL
-	}
+	// Allow clearing optional fields by accepting empty strings
+	business.GSTIN = strings.TrimSpace(input.GSTIN)
+	business.PAN = strings.TrimSpace(input.PAN)
+	business.Phone = strings.TrimSpace(input.Phone)
+	business.Email = strings.TrimSpace(input.Email)
+	business.Address = strings.TrimSpace(input.Address)
+	business.City = strings.TrimSpace(input.City)
+	business.State = strings.TrimSpace(input.State)
+	business.Pincode = strings.TrimSpace(input.Pincode)
+	business.LogoURL = strings.TrimSpace(input.LogoURL)
 	if input.DefaultTemplate != "" {
 		business.DefaultTemplate = input.DefaultTemplate
 	}
@@ -105,7 +100,7 @@ func (h *BusinessHandler) Update(c *fiber.Ctx) error {
 		business.DefaultBillSize = input.DefaultBillSize
 	}
 	if input.InvoicePrefix != "" {
-		business.InvoicePrefix = input.InvoicePrefix
+		business.InvoicePrefix = strings.TrimSpace(input.InvoicePrefix)
 	}
 
 	if err := h.db.Save(&business).Error; err != nil {

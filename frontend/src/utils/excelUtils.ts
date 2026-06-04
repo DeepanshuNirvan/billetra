@@ -6,13 +6,15 @@ export function downloadTemplate(type: 'products' | 'customers') {
   const configs = {
     products: {
       filename: 'products_template.xlsx',
-      headers: ['name', 'sku', 'hsn_code', 'selling_price', 'cost_price', 'gst_rate', 'unit_type', 'stock_quantity', 'low_stock_alert', 'category_name'],
-      sample: ['Sample Product', 'SKU001', '1234', '100', '80', '18', 'pcs', '50', '10', 'Electronics'],
+      // Field names must match backend CreateProductInput JSON tags exactly
+      headers: ['name', 'sku', 'hsn_code', 'unit_type', 'selling_price', 'purchase_price', 'gst_rate', 'stock_quantity', 'low_stock_alert'],
+      sample: ['Sample Product', 'SKU001', '8471', 'piece', '50000', '40000', '18', '10', '2'],
     },
     customers: {
       filename: 'customers_template.xlsx',
-      headers: ['name', 'email', 'phone', 'gstin', 'address', 'city', 'state', 'pincode'],
-      sample: ['Acme Corp', 'acme@example.com', '9876543210', '27AABCU9603R1ZX', '123 MG Road', 'Mumbai', 'Maharashtra', '400001'],
+      // Field names must match backend BulkImport customer struct JSON tags exactly
+      headers: ['name', 'phone', 'email', 'gstin', 'pan', 'billing_address', 'state', 'credit_limit', 'payment_terms'],
+      sample: ['Acme Corp', '9876543210', 'acme@example.com', '27AABCU9603R1ZX', 'AAAPL1234C', '123 MG Road, Mumbai', 'Maharashtra', '0', '30 days'],
     },
   };
 

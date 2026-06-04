@@ -44,7 +44,7 @@ func main() {
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(authService)
-	adminHandler := handlers.NewAdminHandler(userRepo, authService, productRepo, customerRepo, billRepo)
+	adminHandler := handlers.NewAdminHandler(userRepo, authService, productRepo, customerRepo, billRepo, accountRepo)
 	auditHandler := handlers.NewAuditHandler(db)
 	businessHandler := handlers.NewBusinessHandler(db)
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo)
@@ -155,7 +155,14 @@ func main() {
 	admin.Get("/users/:id/products", adminHandler.GetUserProducts)
 	admin.Get("/users/:id/customers", adminHandler.GetUserCustomers)
 	admin.Get("/users/:id/bills", adminHandler.GetUserBills)
+	admin.Get("/users/:id/bills/:billId", adminHandler.GetUserBillDetail)
+	admin.Get("/users/:id/accounts", adminHandler.GetUserAccounts)
 	admin.Get("/users/:id/stats", adminHandler.GetUserStats)
+	admin.Get("/users/:id/business", adminHandler.GetUserBusiness)
+	admin.Put("/users/:id/business", adminHandler.UpdateUserBusiness)
+	admin.Get("/users/:id/reports/sales", adminHandler.GetUserSalesReport)
+	admin.Get("/users/:id/reports/gst", adminHandler.GetUserGSTReport)
+	admin.Get("/users/:id/reports/inventory", adminHandler.GetUserInventoryReport)
 
 	log.Printf("Billetra backend starting on port %s", cfg.Port)
 	if err := app.Listen(":" + cfg.Port); err != nil {

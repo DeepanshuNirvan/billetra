@@ -236,7 +236,7 @@ export interface BillTotals {
 
 export interface SalesReportRow {
   date: string;
-  invoiceCount: number;
+  invoiceCount: number; // from invoice_count via camelCase transform
   subtotal: number;
   discount: number;
   taxable: number;
@@ -247,27 +247,27 @@ export interface SalesReportRow {
 }
 
 export interface GSTReportRow {
-  invoiceNumber: string;
-  customerName: string;
-  billDate: string;
+  invoiceNumber: string; // from invoice_number
+  customerName: string;  // from customer_name
+  billDate: string;      // from bill_date
   taxable: number;
   cgst: number;
   sgst: number;
   igst: number;
-  totalGst: number;
+  totalGst: number;      // from total_gst
   total: number;
-  isInterstate: boolean;
+  isInterstate: boolean; // from is_interstate
 }
 
 export interface InventoryReportRow {
   id: string;
   name: string;
-  sku?: string;
-  category?: string;
-  stockQuantity: number;
-  purchasePrice: number;
-  sellingPrice: number;
-  stockValue: number;
-  lowStockAlert: number;
-  isLowStock: boolean;
+  sku: string;
+  category: string;
+  stockQuantity: number;  // from stock_quantity
+  purchasePrice: number;  // from purchase_price
+  sellingPrice: number;   // from selling_price
+  stockValue: number;     // from stock_value
+  lowStockAlert: number;  // from low_stock_alert
+  isLowStock: boolean;    // from is_low_stock
 }

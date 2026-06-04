@@ -267,20 +267,20 @@ func (r *BillRepository) GetMonthlyRevenue(userID string, months int) ([]MonthPo
 }
 
 type AgingBuckets struct {
-	Days0to30  float64 `json:"days_0_30"`
-	Days31to60 float64 `json:"days_31_60"`
-	Days61to90 float64 `json:"days_61_90"`
-	Days90plus float64 `json:"days_90_plus"`
+	Days030   float64 `json:"days030"`
+	Days3160  float64 `json:"days3160"`
+	Days6190  float64 `json:"days6190"`
+	Days90Plus float64 `json:"days90Plus"`
 }
 
 func (r *BillRepository) GetOverdueAging(userID string) (*AgingBuckets, error) {
 	var b AgingBuckets
 	err := r.db.Raw(`
 		SELECT
-			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) <= INTERVAL '30 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_0_to_30,
-			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '30 days' AND AGE(NOW(), due_date) <= INTERVAL '60 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_31_to_60,
-			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '60 days' AND AGE(NOW(), due_date) <= INTERVAL '90 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_61_to_90,
-			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '90 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days_90_plus
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) <= INTERVAL '30 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days030,
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '30 days' AND AGE(NOW(), due_date) <= INTERVAL '60 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days3160,
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '60 days' AND AGE(NOW(), due_date) <= INTERVAL '90 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days6190,
+			COALESCE(SUM(CASE WHEN AGE(NOW(), due_date) > INTERVAL '90 days' THEN total_amount - paid_amount ELSE 0 END), 0) as days90_plus
 		FROM bills
 		WHERE user_id = ? AND status IN ('pending', 'overdue') AND due_date IS NOT NULL
 	`, userID).Scan(&b).Error
@@ -309,15 +309,22 @@ func (r *BillRepository) GetLastMonthSales(userID string) (float64, error) {
 	return result.Amount, nil
 }
 
-type SalesReport struct {
-	Period      string  `json:"period"`
-	TotalSales  float64 `json:"total_sales"`
-	TotalBills  int64   `json:"total_bills"`
-	TotalTax    float64 `json:"total_tax"`
+// SalesReportRow matches the frontend SalesReportRow type exactly.
+// JSON keys are camelCase because the Axios client transforms snake_case → camelCase.
+type SalesReportRow struct {
+	Date         string  `json:"date"`
+	InvoiceCount int64   `json:"invoice_count"`  // → invoiceCount after transform
+	Subtotal     float64 `json:"subtotal"`
+	Discount     float64 `json:"discount"`
+	Taxable      float64 `json:"taxable"`
+	CGST         float64 `json:"cgst"`
+	SGST         float64 `json:"sgst"`
+	IGST         float64 `json:"igst"`
+	Total        float64 `json:"total"`
 }
 
-func (r *BillRepository) GetSalesReport(userID string, from, to time.Time, groupBy string) ([]SalesReport, error) {
-	var results []SalesReport
+func (r *BillRepository) GetSalesReport(userID string, from, to time.Time, groupBy string) ([]SalesReportRow, error) {
+	var results []SalesReportRow
 	var dateFormat string
 	if groupBy == "month" {
 		dateFormat = "YYYY-MM"
@@ -326,43 +333,89 @@ func (r *BillRepository) GetSalesReport(userID string, from, to time.Time, group
 	}
 
 	err := r.db.Raw(`
-		SELECT TO_CHAR(bill_date, ?) as period,
-		       COALESCE(SUM(total_amount),0) as total_sales,
-		       COUNT(*) as total_bills,
-		       COALESCE(SUM(total_tax),0) as total_tax
+		SELECT TO_CHAR(bill_date, ?) as date,
+		       COUNT(*) as invoice_count,
+		       COALESCE(SUM(subtotal),0) as subtotal,
+		       COALESCE(SUM(discount_amount),0) as discount,
+		       COALESCE(SUM(taxable_amount),0) as taxable,
+		       COALESCE(SUM(cgst_amount),0) as cgst,
+		       COALESCE(SUM(sgst_amount),0) as sgst,
+		       COALESCE(SUM(igst_amount),0) as igst,
+		       COALESCE(SUM(total_amount),0) as total
 		FROM bills
 		WHERE user_id = ? AND bill_date BETWEEN ? AND ? AND status != 'cancelled'
-		GROUP BY period
-		ORDER BY period ASC
+		GROUP BY date
+		ORDER BY date ASC
 	`, dateFormat, userID, from, to).Scan(&results).Error
 	return results, err
 }
 
-type GSTReport struct {
-	GSTRate     float64 `json:"gst_rate"`
-	HSNCode     string  `json:"hsn_code"`
-	Taxable     float64 `json:"taxable"`
-	CGSTAmount  float64 `json:"cgst_amount"`
-	SGSTAmount  float64 `json:"sgst_amount"`
-	IGSTAmount  float64 `json:"igst_amount"`
-	TotalGST    float64 `json:"total_gst"`
+// GSTReportRow matches the frontend GSTReportRow type — per-invoice breakdown.
+type GSTReportRow struct {
+	InvoiceNumber string  `json:"invoice_number"`  // → invoiceNumber
+	CustomerName  string  `json:"customer_name"`   // → customerName
+	BillDate      string  `json:"bill_date"`       // → billDate
+	Taxable       float64 `json:"taxable"`
+	CGST          float64 `json:"cgst"`
+	SGST          float64 `json:"sgst"`
+	IGST          float64 `json:"igst"`
+	TotalGST      float64 `json:"total_gst"`       // → totalGst
+	Total         float64 `json:"total"`
+	IsInterstate  bool    `json:"is_interstate"`   // → isInterstate
 }
 
-func (r *BillRepository) GetGSTReport(userID string, from, to time.Time) ([]GSTReport, error) {
-	var results []GSTReport
+func (r *BillRepository) GetGSTReport(userID string, from, to time.Time) ([]GSTReportRow, error) {
+	var results []GSTReportRow
 	err := r.db.Raw(`
-		SELECT bi.gst_rate,
-		       COALESCE(bi.hsn_code,'') as hsn_code,
-		       SUM(bi.price * bi.quantity - bi.discount_amount) as taxable,
-		       SUM(CASE WHEN b.is_interstate = false THEN bi.gst_amount / 2 ELSE 0 END) as cgst_amount,
-		       SUM(CASE WHEN b.is_interstate = false THEN bi.gst_amount / 2 ELSE 0 END) as sgst_amount,
-		       SUM(CASE WHEN b.is_interstate = true THEN bi.gst_amount ELSE 0 END) as igst_amount,
-		       SUM(bi.gst_amount) as total_gst
-		FROM bill_items bi
-		JOIN bills b ON b.id = bi.bill_id
+		SELECT b.invoice_number,
+		       COALESCE(c.name, 'Walk-in') as customer_name,
+		       TO_CHAR(b.bill_date, 'YYYY-MM-DD') as bill_date,
+		       COALESCE(b.taxable_amount, 0) as taxable,
+		       COALESCE(b.cgst_amount, 0) as cgst,
+		       COALESCE(b.sgst_amount, 0) as sgst,
+		       COALESCE(b.igst_amount, 0) as igst,
+		       COALESCE(b.total_tax, 0) as total_gst,
+		       COALESCE(b.total_amount, 0) as total,
+		       b.is_interstate
+		FROM bills b
+		LEFT JOIN customers c ON c.id = b.customer_id
 		WHERE b.user_id = ? AND b.bill_date BETWEEN ? AND ? AND b.status != 'cancelled'
-		GROUP BY bi.gst_rate, bi.hsn_code
-		ORDER BY bi.gst_rate
+		ORDER BY b.bill_date DESC, b.created_at DESC
 	`, userID, from, to).Scan(&results).Error
+	return results, err
+}
+
+// InventoryReportRow matches the frontend InventoryReportRow type.
+type InventoryReportRow struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	SKU           string  `json:"sku"`
+	Category      string  `json:"category"`
+	StockQuantity float64 `json:"stock_quantity"`   // → stockQuantity
+	PurchasePrice float64 `json:"purchase_price"`   // → purchasePrice
+	SellingPrice  float64 `json:"selling_price"`    // → sellingPrice
+	StockValue    float64 `json:"stock_value"`      // → stockValue
+	LowStockAlert float64 `json:"low_stock_alert"`  // → lowStockAlert
+	IsLowStock    bool    `json:"is_low_stock"`     // → isLowStock
+}
+
+func (r *BillRepository) GetInventoryReport(userID string) ([]InventoryReportRow, error) {
+	var results []InventoryReportRow
+	err := r.db.Raw(`
+		SELECT p.id::text,
+		       p.name,
+		       COALESCE(p.sku, '') as sku,
+		       COALESCE(cat.name, '') as category,
+		       p.stock_quantity,
+		       p.purchase_price,
+		       p.selling_price,
+		       ROUND((p.stock_quantity * p.purchase_price)::numeric, 2) as stock_value,
+		       p.low_stock_alert,
+		       (p.stock_quantity <= p.low_stock_alert) as is_low_stock
+		FROM products p
+		LEFT JOIN categories cat ON cat.id = p.category_id
+		WHERE p.user_id = ? AND p.is_active = true
+		ORDER BY p.name ASC
+	`, userID).Scan(&results).Error
 	return results, err
 }

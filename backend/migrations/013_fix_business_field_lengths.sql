@@ -1,0 +1,7 @@
+-- +goose Up
+ALTER TABLE businesses ALTER COLUMN gstin TYPE VARCHAR(20);
+ALTER TABLE businesses ALTER COLUMN pan TYPE VARCHAR(15);
+
+-- +goose Down
+ALTER TABLE businesses ALTER COLUMN gstin TYPE VARCHAR(15);
+ALTER TABLE businesses ALTER COLUMN pan TYPE VARCHAR(10);

@@ -205,51 +205,80 @@ func (h *ProductHandler) Delete(c *fiber.Ctx) error {
 }
 
 // BulkImport handles JSON array: POST /products/bulk-import
+// Accepts flexible field names to handle different Excel template versions.
 func (h *ProductHandler) BulkImport(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	uid, _ := uuid.Parse(userID)
 
-	var inputs []CreateProductInput
-	if err := c.BodyParser(&inputs); err != nil {
-		return utils.BadRequest(c, "invalid JSON array")
+	// Use a flexible map to handle field name variations from Excel exports
+	var rawRows []map[string]interface{}
+	if err := c.BodyParser(&rawRows); err != nil {
+		return utils.BadRequest(c, "invalid JSON array — expected array of objects")
 	}
-	if len(inputs) == 0 {
+	if len(rawRows) == 0 {
 		return utils.BadRequest(c, "no items provided")
 	}
-	if len(inputs) > 500 {
+	if len(rawRows) > 500 {
 		return utils.BadRequest(c, "max 500 items per import")
+	}
+
+	getStr := func(row map[string]interface{}, keys ...string) string {
+		for _, k := range keys {
+			if v, ok := row[k]; ok && v != nil {
+				return strings.TrimSpace(fmt.Sprintf("%v", v))
+			}
+		}
+		return ""
+	}
+	getFloat := func(row map[string]interface{}, keys ...string) float64 {
+		for _, k := range keys {
+			if v, ok := row[k]; ok && v != nil {
+				switch n := v.(type) {
+				case float64:
+					return n
+				case int:
+					return float64(n)
+				case string:
+					var f float64
+					fmt.Sscanf(n, "%f", &f)
+					return f
+				}
+			}
+		}
+		return 0
 	}
 
 	var products []models.Product
 	var errs []string
 
-	for i, input := range inputs {
-		if input.Name == "" {
+	for i, row := range rawRows {
+		name := getStr(row, "name", "Name", "product_name", "ProductName")
+		if name == "" {
 			errs = append(errs, fmt.Sprintf("row %d: name is required", i+1))
 			continue
 		}
+		unitType := getStr(row, "unit_type", "unitType", "UnitType", "unit")
+		if unitType == "" {
+			unitType = "piece"
+		}
 		p := models.Product{
 			UserID:        uid,
-			Name:          input.Name,
-			SKU:           input.SKU,
-			Description:   input.Description,
-			HSNCode:       input.HSNCode,
-			UnitType:      input.UnitType,
-			SellingPrice:  input.SellingPrice,
-			PurchasePrice: input.PurchasePrice,
-			GSTRate:       input.GSTRate,
-			StockQuantity: input.StockQuantity,
-			LowStockAlert: input.LowStockAlert,
+			Name:          name,
+			SKU:           getStr(row, "sku", "SKU", "Sku"),
+			Description:   getStr(row, "description", "Description"),
+			HSNCode:       getStr(row, "hsn_code", "hsnCode", "HSNCode", "hsn"),
+			UnitType:      unitType,
+			CustomUnit:    getStr(row, "custom_unit", "customUnit"),
+			SizeVariant:   getStr(row, "size_variant", "sizeVariant"),
+			SellingPrice:  getFloat(row, "selling_price", "sellingPrice", "price", "sell_price"),
+			PurchasePrice: getFloat(row, "purchase_price", "purchasePrice", "cost_price", "costPrice", "cost"),
+			GSTRate:       getFloat(row, "gst_rate", "gstRate", "gst", "tax_rate"),
+			StockQuantity: getFloat(row, "stock_quantity", "stockQuantity", "stock", "qty", "quantity"),
+			LowStockAlert: getFloat(row, "low_stock_alert", "lowStockAlert", "low_stock", "alert"),
 			IsActive:      true,
 		}
-		if p.UnitType == "" {
-			p.UnitType = "piece"
-		}
-		if input.CategoryID != nil && *input.CategoryID != "" {
-			cid, err := uuid.Parse(*input.CategoryID)
-			if err == nil {
-				p.CategoryID = &cid
-			}
+		if p.LowStockAlert == 0 {
+			p.LowStockAlert = 5 // sensible default
 		}
 		products = append(products, p)
 	}

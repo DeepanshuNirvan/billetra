@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/billetra/backend/internal/models"
 	"github.com/billetra/backend/internal/repository"
@@ -155,50 +156,72 @@ func (h *CustomerHandler) Delete(c *fiber.Ctx) error {
 }
 
 // BulkImport handles JSON array: POST /customers/bulk-import
+// Accepts flexible field names to handle different Excel template versions.
 func (h *CustomerHandler) BulkImport(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	uid, _ := uuid.Parse(userID)
 
-	var inputs []struct {
-		Name           string  `json:"name"`
-		Phone          string  `json:"phone"`
-		Email          string  `json:"email"`
-		GSTIN          string  `json:"gstin"`
-		PAN            string  `json:"pan"`
-		BillingAddress string  `json:"billing_address"`
-		State          string  `json:"state"`
-		CreditLimit    float64 `json:"credit_limit"`
-		PaymentTerms   string  `json:"payment_terms"`
+	var rawRows []map[string]interface{}
+	if err := c.BodyParser(&rawRows); err != nil {
+		return utils.BadRequest(c, "invalid JSON array — expected array of objects")
 	}
-	if err := c.BodyParser(&inputs); err != nil {
-		return utils.BadRequest(c, "invalid JSON array")
-	}
-	if len(inputs) == 0 {
+	if len(rawRows) == 0 {
 		return utils.BadRequest(c, "no items provided")
 	}
-	if len(inputs) > 500 {
+	if len(rawRows) > 500 {
 		return utils.BadRequest(c, "max 500 items per import")
+	}
+
+	getStr := func(row map[string]interface{}, keys ...string) string {
+		for _, k := range keys {
+			if v, ok := row[k]; ok && v != nil {
+				s := strings.TrimSpace(fmt.Sprintf("%v", v))
+				if s != "" && s != "<nil>" {
+					return s
+				}
+			}
+		}
+		return ""
+	}
+	getFloat := func(row map[string]interface{}, keys ...string) float64 {
+		for _, k := range keys {
+			if v, ok := row[k]; ok && v != nil {
+				switch n := v.(type) {
+				case float64:
+					return n
+				case int:
+					return float64(n)
+				case string:
+					var f float64
+					fmt.Sscanf(n, "%f", &f)
+					return f
+				}
+			}
+		}
+		return 0
 	}
 
 	var customers []models.Customer
 	var errs []string
-	for i, inp := range inputs {
-		if inp.Name == "" {
+	for i, row := range rawRows {
+		name := getStr(row, "name", "Name", "customer_name", "CustomerName")
+		if name == "" {
 			errs = append(errs, fmt.Sprintf("row %d: name is required", i+1))
 			continue
 		}
 		customers = append(customers, models.Customer{
-			UserID:         uid,
-			Name:           inp.Name,
-			Phone:          inp.Phone,
-			Email:          inp.Email,
-			GSTIN:          inp.GSTIN,
-			PAN:            inp.PAN,
-			BillingAddress: inp.BillingAddress,
-			State:          inp.State,
-			CreditLimit:    inp.CreditLimit,
-			PaymentTerms:   inp.PaymentTerms,
-			IsActive:       true,
+			UserID:          uid,
+			Name:            name,
+			Phone:           getStr(row, "phone", "Phone", "mobile"),
+			Email:           getStr(row, "email", "Email"),
+			GSTIN:           getStr(row, "gstin", "GSTIN", "gst_number"),
+			PAN:             getStr(row, "pan", "PAN"),
+			BillingAddress:  getStr(row, "billing_address", "billingAddress", "address", "Address", "billing_addr"),
+			ShippingAddress: getStr(row, "shipping_address", "shippingAddress", "shipping_addr"),
+			State:           getStr(row, "state", "State"),
+			CreditLimit:     getFloat(row, "credit_limit", "creditLimit", "credit"),
+			PaymentTerms:    getStr(row, "payment_terms", "paymentTerms", "terms"),
+			IsActive:        true,
 		})
 	}
 

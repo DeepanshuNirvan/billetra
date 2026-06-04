@@ -10,39 +10,30 @@ export interface ReportFilters {
 export const reportsApi = {
   sales: async (filters: ReportFilters): Promise<SalesReportRow[]> => {
     const { data } = await apiClient.get<ApiResponse<SalesReportRow[]>>('/reports/sales', {
-      params: filters,
+      params: {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        groupBy: filters.groupBy ?? 'day',
+      },
     });
-    if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
-    return data.data;
+    if (!data.success) throw new Error(data.error ?? 'Failed');
+    return Array.isArray(data.data) ? data.data : [];
   },
 
-  gst: async (filters: ReportFilters): Promise<GSTReportRow[]> => {
+  gst: async (filters: Omit<ReportFilters, 'groupBy'>): Promise<GSTReportRow[]> => {
     const { data } = await apiClient.get<ApiResponse<GSTReportRow[]>>('/reports/gst', {
-      params: filters,
+      params: {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      },
     });
-    if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
-    return data.data;
+    if (!data.success) throw new Error(data.error ?? 'Failed');
+    return Array.isArray(data.data) ? data.data : [];
   },
 
   inventory: async (): Promise<InventoryReportRow[]> => {
     const { data } = await apiClient.get<ApiResponse<InventoryReportRow[]>>('/reports/inventory');
-    if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
-    return data.data;
-  },
-
-  exportSalesCsv: async (filters: ReportFilters): Promise<Blob> => {
-    const { data } = await apiClient.get('/reports/sales/export', {
-      params: { ...filters, format: 'csv' },
-      responseType: 'blob',
-    });
-    return data;
-  },
-
-  exportGstCsv: async (filters: ReportFilters): Promise<Blob> => {
-    const { data } = await apiClient.get('/reports/gst/export', {
-      params: { ...filters, format: 'csv' },
-      responseType: 'blob',
-    });
-    return data;
+    if (!data.success) throw new Error(data.error ?? 'Failed');
+    return Array.isArray(data.data) ? data.data : [];
   },
 };
