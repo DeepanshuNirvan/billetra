@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"encoding/base64"
 	_ "embed"
 	"fmt"
 	"strings"
@@ -188,6 +189,87 @@ func (p *pdfCtx) font(style string, size float64) {
 		st = "B"
 	}
 	p.pdf.SetFont("Sans", st, size)
+}
+
+// decodeDataURIImage parses a "data:image/...;base64,..." URI into raw bytes
+// and a gofpdf image type. Returns ok=false for anything it can't render.
+func decodeDataURIImage(uri string) ([]byte, string, bool) {
+	if !strings.HasPrefix(uri, "data:") {
+		return nil, "", false
+	}
+	comma := strings.IndexByte(uri, ',')
+	if comma < 0 {
+		return nil, "", false
+	}
+	meta := uri[len("data:"):comma]
+	if !strings.Contains(meta, "base64") {
+		return nil, "", false
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimSpace(uri[comma+1:]))
+	if err != nil || len(raw) == 0 {
+		return nil, "", false
+	}
+	var typ string
+	switch {
+	case strings.Contains(meta, "jpeg"), strings.Contains(meta, "jpg"):
+		typ = "JPG"
+	case strings.Contains(meta, "png"):
+		typ = "PNG"
+	case strings.Contains(meta, "gif"):
+		typ = "GIF"
+	default:
+		return nil, "", false
+	}
+	return raw, typ, true
+}
+
+// drawLogo renders the business logo inside the box (x,y,wMax,hMax), preserving
+// aspect ratio and anchoring horizontally per align ("L","C","R"). It returns
+// the width and height actually drawn (0,0 when there is no usable logo).
+func (p *pdfCtx) drawLogo(x, y, wMax, hMax float64, align string) (w float64, h float64) {
+	if p.biz == nil || !p.biz.ShowLogoOnBills || strings.TrimSpace(p.biz.LogoURL) == "" {
+		return 0, 0
+	}
+	raw, typ, ok := decodeDataURIImage(p.biz.LogoURL)
+	if !ok {
+		return 0, 0
+	}
+	// gofpdf panics on some malformed/unsupported images. Never let a bad logo
+	// crash the whole invoice — just skip it.
+	defer func() {
+		if r := recover(); r != nil {
+			p.pdf.ClearError()
+			w, h = 0, 0
+		}
+	}()
+	opt := gofpdf.ImageOptions{ImageType: typ}
+	info := p.pdf.RegisterImageOptionsReader("biz-logo", opt, bytes.NewReader(raw))
+	if info == nil || p.pdf.Err() {
+		p.pdf.ClearError()
+		return 0, 0
+	}
+	iw, ih := info.Extent()
+	if iw <= 0 || ih <= 0 {
+		return 0, 0
+	}
+	scale := wMax / iw
+	if ih*scale > hMax {
+		scale = hMax / ih
+	}
+	w, h = iw*scale, ih*scale
+	dx := x
+	switch align {
+	case "C":
+		dx = x + (wMax-w)/2
+	case "R":
+		dx = x + (wMax - w)
+	}
+	p.pdf.ImageOptions("biz-logo", dx, y, w, h, false, opt, 0, "")
+	if p.pdf.Err() {
+		p.pdf.ClearError()
+		return 0, 0
+	}
+	return w, h
 }
 
 func (p *pdfCtx) text(c rgb)     { p.pdf.SetTextColor(c.r, c.g, c.b) }

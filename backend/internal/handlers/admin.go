@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/billetra/backend/internal/models"
 	"github.com/billetra/backend/internal/repository"
 	"github.com/billetra/backend/internal/services"
 	"github.com/billetra/backend/internal/utils"
@@ -67,6 +68,29 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 	user, err := h.authService.CreateUser(input)
 	if err != nil {
 		return utils.BadRequest(c, err.Error())
+	}
+
+	// New owner accounts start deactivated — the admin must explicitly activate
+	// them before they can log in. They also get an editable business profile so
+	// the settings page works on first login.
+	if user.Role == models.RoleUser {
+		db := h.billRepo.GetDB()
+		if err := h.userRepo.UpdateFields(user.ID.String(), map[string]interface{}{"is_active": false}); err != nil {
+			log.Printf("create user: deactivate error: %v", err)
+		}
+		user.IsActive = false
+
+		var count int64
+		db.Model(&models.Business{}).Where("user_id = ?", user.ID).Count(&count)
+		if count == 0 {
+			name := strings.TrimSpace(input.BusinessName)
+			if name == "" {
+				name = user.Name
+			}
+			if err := db.Create(&models.Business{UserID: user.ID, Name: name}).Error; err != nil {
+				log.Printf("create user: business seed error: %v", err)
+			}
+		}
 	}
 	return utils.Created(c, user)
 }

@@ -9,7 +9,7 @@ import { useCreateUser } from '../../hooks/useAdmin';
 export default function CreateAdminUser() {
   const navigate = useNavigate();
   const createUser = useCreateUser();
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', businessName: '' });
   const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,6 +25,7 @@ export default function CreateAdminUser() {
         email: form.email,
         password: form.password,
         phone: form.phone || undefined,
+        businessName: form.businessName || undefined,
       });
       navigate('/admin/users');
     } catch (err: unknown) {
@@ -80,6 +81,17 @@ export default function CreateAdminUser() {
             onChange={handleChange}
             placeholder="10-digit mobile number"
           />
+          <Input
+            label="Business Name (optional)"
+            name="businessName"
+            value={form.businessName}
+            onChange={handleChange}
+            placeholder="Defaults to the user's name"
+          />
+
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            New users start <strong>deactivated</strong> and cannot log in until you activate them from their detail page.
+          </p>
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>

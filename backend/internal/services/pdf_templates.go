@@ -412,6 +412,9 @@ func unitSuffix(u string) string {
 // ── Templates ────────────────────────────────────────────────────────────
 
 func renderModern(p *pdfCtx) {
+	if _, h := p.drawLogo(p.mL, p.y(), 30, 16, "L"); h > 0 {
+		p.setY(p.y() + h + 3)
+	}
 	// Business name
 	p.font("B", 20)
 	p.text(p.th.primary)
@@ -487,6 +490,9 @@ func renderClassicGST(p *pdfCtx) {
 	top := p.mT
 	p.draw(p.th.line)
 	p.pdf.SetLineWidth(0.5)
+	if _, h := p.drawLogo(p.mL, p.y(), p.contentW, 16, "C"); h > 0 {
+		p.setY(p.y() + h + 3)
+	}
 	// Title
 	p.font("B", 9)
 	p.text(p.th.muted)
@@ -585,10 +591,14 @@ func renderCorporate(p *pdfCtx) {
 	p.fill(p.th.primaryAlt)
 	p.pdf.Rect(0, bandH, p.pageW, 1.5, "F")
 
-	p.pdf.SetXY(p.mL, 9)
+	off := 0.0
+	if lw, _ := p.drawLogo(p.mL, 4, 18, 13, "L"); lw > 0 {
+		off = lw + 3
+	}
+	p.pdf.SetXY(p.mL+off, 9)
 	p.font("B", 20)
 	p.text(rgb{255, 255, 255})
-	p.pdf.CellFormat(p.contentW*0.6, 9, p.biz.Name, "", 0, "L", false, 0, "")
+	p.pdf.CellFormat(p.contentW*0.6-off, 9, p.biz.Name, "", 0, "L", false, 0, "")
 	p.font("B", 16)
 	p.pdf.CellFormat(p.contentW*0.4, 9, "INVOICE", "", 1, "R", false, 0, "")
 	p.pdf.SetX(p.mL)
@@ -652,6 +662,9 @@ func renderCorporate(p *pdfCtx) {
 
 func renderElegant(p *pdfCtx) {
 	black := rgb{17, 24, 39}
+	if _, h := p.drawLogo(p.mL, p.y(), 26, 14, "L"); h > 0 {
+		p.setY(p.y() + h + 3)
+	}
 	// Big spaced title
 	p.font("B", 22)
 	p.text(black)
@@ -720,6 +733,9 @@ func renderElegant(p *pdfCtx) {
 }
 
 func renderRetail(p *pdfCtx) {
+	if _, h := p.drawLogo(p.mL, p.y(), 24, 12, "L"); h > 0 {
+		p.setY(p.y() + h + 2)
+	}
 	p.font("B", 15)
 	p.text(p.th.primary)
 	p.pdf.SetX(p.mL)
@@ -771,6 +787,9 @@ func renderThermal(p *pdfCtx) {
 		p.font("", 7)
 		p.pdf.SetX(p.mL)
 		p.pdf.CellFormat(cw, 3.5, strings.Repeat("-", 48), "", 1, "C", false, 0, "")
+	}
+	if _, h := p.drawLogo(p.mL, p.y(), p.contentW, 18, "C"); h > 0 {
+		p.setY(p.y() + h + 2)
 	}
 	p.text(p.th.heading)
 	center(p.biz.Name, 11, true)
@@ -853,6 +872,10 @@ func renderRoyal(p *pdfCtx) {
 	p.pdf.Rect(p.mL-2, p.mT-2, p.contentW+4, p.pageHeight()-2*p.mT+4, "D")
 	p.pdf.SetLineWidth(0.2)
 
+	if _, h := p.drawLogo(p.mL, p.y(), p.contentW, 16, "C"); h > 0 {
+		p.setY(p.y() + h + 3)
+	}
+
 	// header
 	p.font("B", 21)
 	p.text(navy)
@@ -932,6 +955,9 @@ func renderRoyal(p *pdfCtx) {
 }
 
 func renderMinimal(p *pdfCtx) {
+	if _, h := p.drawLogo(p.mL, p.y(), 28, 14, "L"); h > 0 {
+		p.setY(p.y() + h + 3)
+	}
 	p.font("B", 18)
 	p.text(p.th.heading)
 	p.pdf.SetX(p.mL)

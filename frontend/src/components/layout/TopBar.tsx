@@ -30,7 +30,7 @@ export function TopBar({ actions }: TopBarProps) {
   const { user } = useAuthStore();
 
   const title = pageTitles[pathname] ?? 'Billetra';
-  const canGoBack = pathname !== '/' && pathname.split('/').length > 2;
+  const canGoBack = pathname !== '/';
 
   return (
     <header className="sticky top-0 z-20 bg-surface border-b border-gray-100 px-4 md:px-6 h-16 flex items-center justify-between gap-4">
@@ -38,7 +38,8 @@ export function TopBar({ actions }: TopBarProps) {
         {canGoBack && (
           <button
             onClick={() => navigate(-1)}
-            className="md:hidden rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label="Go back"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>

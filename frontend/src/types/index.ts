@@ -4,8 +4,8 @@ export interface User {
   name: string;
   phone?: string;
   role: 'super_admin' | 'user';
-  is_active: boolean;
-  created_at: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface AdminUser extends User {
@@ -28,6 +28,7 @@ export interface Business {
   defaultTemplate: string;
   defaultBillSize: string;
   invoicePrefix: string;
+  showLogoOnBills: boolean;
 }
 
 export interface Category {
@@ -163,14 +164,14 @@ export interface DashboardData {
 
 export interface AuditLogEntry {
   id: string;
-  user_id: string;
-  entity_type: string;
-  entity_id: string;
+  userId: string;
+  entityType: string;
+  entityId: string;
   action: 'create' | 'update' | 'delete';
-  old_data?: Record<string, unknown>;
-  new_data?: Record<string, unknown>;
-  ip_address?: string;
-  created_at: string;
+  oldData?: Record<string, unknown>;
+  newData?: Record<string, unknown>;
+  ipAddress?: string;
+  createdAt: string;
 }
 
 export interface BulkImportResult {

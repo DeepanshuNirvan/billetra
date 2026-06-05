@@ -26,6 +26,7 @@ const schema = z.object({
   invoicePrefix: z.string().min(1, 'Prefix is required'),
   defaultTemplate: z.string(),
   defaultBillSize: z.string(),
+  showLogoOnBills: z.boolean(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -50,6 +51,7 @@ export default function BusinessSettings() {
       invoicePrefix: business?.invoicePrefix ?? 'INV',
       defaultTemplate: business?.defaultTemplate ?? 'modern',
       defaultBillSize: business?.defaultBillSize ?? 'a4_portrait',
+      showLogoOnBills: business?.showLogoOnBills ?? true,
     },
   });
 
@@ -68,6 +70,7 @@ export default function BusinessSettings() {
         invoicePrefix: business.invoicePrefix,
         defaultTemplate: business.defaultTemplate,
         defaultBillSize: business.defaultBillSize,
+        showLogoOnBills: business.showLogoOnBills ?? true,
       });
     }
   }, [business, reset]);
@@ -144,6 +147,18 @@ export default function BusinessSettings() {
             className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo.mutate(f); }}
           />
+
+          <label className="mt-4 flex items-center gap-3 cursor-pointer border-t border-gray-100 pt-4">
+            <input
+              type="checkbox"
+              {...register('showLogoOnBills')}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-sm text-gray-700">
+              Show logo on invoices
+              <span className="block text-xs text-gray-400">Print the logo at the top of generated bills (save to apply).</span>
+            </span>
+          </label>
         </Card>
 
         {/* Business Info */}

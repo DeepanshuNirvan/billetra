@@ -114,13 +114,13 @@ func (r *BillRepository) IncrementInvoiceCounter(tx *gorm.DB, userID string) (in
 
 // DashboardStats returns aggregate numbers
 type DashboardStats struct {
-	TodaySales       float64
-	MonthSales       float64
-	TotalOutstanding float64
-	GSTCollected     float64
-	TotalBills       int64
-	PaidBills        int64
-	PendingBills     int64
+	TodaySales       float64 `json:"today_sales"`
+	MonthSales       float64 `json:"month_sales"`
+	TotalOutstanding float64 `json:"total_outstanding"`
+	GSTCollected     float64 `json:"gst_collected"`
+	TotalBills       int64   `json:"total_bills"`
+	PaidBills        int64   `json:"paid_bills"`
+	PendingBills     int64   `json:"pending_bills"`
 }
 
 func (r *BillRepository) GetDashboardStats(userID string) (*DashboardStats, error) {

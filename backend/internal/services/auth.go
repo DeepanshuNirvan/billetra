@@ -32,11 +32,12 @@ type LoginInput struct {
 }
 
 type CreateUserInput struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=6"`
-	Name     string `json:"name" validate:"required"`
-	Phone    string `json:"phone"`
-	Role     string `json:"role"`
+	Email        string `json:"email" validate:"required,email"`
+	Password     string `json:"password" validate:"required,min=6"`
+	Name         string `json:"name" validate:"required"`
+	Phone        string `json:"phone"`
+	Role         string `json:"role"`
+	BusinessName string `json:"business_name"`
 }
 
 type AuthTokens struct {

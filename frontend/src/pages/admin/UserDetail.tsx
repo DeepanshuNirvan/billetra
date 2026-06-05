@@ -104,8 +104,8 @@ export default function AdminUserDetail() {
 
   const handleToggleActive = async () => {
     try {
-      await updateUser.mutateAsync({ id, data: { is_active: !user.is_active } });
-      toast.success(user.is_active ? 'User suspended' : 'User activated');
+      await updateUser.mutateAsync({ id, data: { is_active: !user.isActive } });
+      toast.success(user.isActive ? 'User suspended' : 'User activated');
     } catch (e: any) {
       toast.error('Failed to update user', e.message);
     }
@@ -133,7 +133,7 @@ export default function AdminUserDetail() {
                   <span className="flex items-center gap-1"><Shield className="h-3 w-3" /> Super Admin</span>
                 ) : 'Owner'}
               </Badge>
-              <Badge color={user.is_active ? 'green' : 'red'}>{user.is_active ? 'Active' : 'Suspended'}</Badge>
+              <Badge color={user.isActive ? 'green' : 'red'}>{user.isActive ? 'Active' : 'Suspended'}</Badge>
             </div>
             <p className="text-sm text-gray-500 truncate">
               {user.email}{user.business?.name ? ` · ${user.business.name}` : ''}
@@ -141,11 +141,11 @@ export default function AdminUserDetail() {
           </div>
           <Button
             size="sm"
-            variant={user.is_active ? 'danger' : 'outline'}
+            variant={user.isActive ? 'danger' : 'outline'}
             onClick={handleToggleActive}
             loading={updateUser.isPending}
           >
-            {user.is_active ? 'Suspend' : 'Activate'}
+            {user.isActive ? 'Suspend' : 'Activate'}
           </Button>
         </div>
       </div>
@@ -180,6 +180,27 @@ export default function AdminUserDetail() {
 
       {/* ── Overview ── */}
       {tab === 'overview' && (
+        <div className="space-y-5">
+        {/* Secondary metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card>
+            <p className="text-xs text-gray-400 uppercase font-semibold">Today's Sales</p>
+            <p className="text-lg font-bold text-gray-900 mt-1">{formatCurrency(stats?.todaySales ?? 0)}</p>
+          </Card>
+          <Card>
+            <p className="text-xs text-gray-400 uppercase font-semibold">Paid Bills</p>
+            <p className="text-lg font-bold text-emerald-600 mt-1">{stats?.paidBills ?? 0}</p>
+          </Card>
+          <Card>
+            <p className="text-xs text-gray-400 uppercase font-semibold">Pending Bills</p>
+            <p className="text-lg font-bold text-amber-600 mt-1">{stats?.pendingBills ?? 0}</p>
+          </Card>
+          <Card>
+            <p className="text-xs text-gray-400 uppercase font-semibold">Accounts</p>
+            <p className="text-lg font-bold text-gray-900 mt-1">{accounts?.length ?? 0}</p>
+          </Card>
+        </div>
+
         <Card>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-900">Business Profile</h3>
@@ -234,12 +255,58 @@ export default function AdminUserDetail() {
               <Field label="Email" value={business.email} />
               <Field label="Address" value={[business.address, business.city, business.state, business.pincode].filter(Boolean).join(', ')} />
               <Field label="Invoice Prefix" value={business.invoicePrefix} />
-              <Field label="Joined" value={formatDate(user.created_at)} />
+              <Field label="Joined" value={formatDate(user.createdAt)} />
             </dl>
           ) : (
             <p className="text-sm text-gray-500">No business profile set up yet.</p>
           )}
         </Card>
+
+        {/* Recent bills + low stock */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <Card>
+            <h3 className="font-semibold text-gray-900 mb-3">Recent Bills</h3>
+            {(bills.data?.data ?? []).slice(0, 5).length === 0 ? (
+              <p className="text-sm text-gray-400">No bills yet.</p>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {(bills.data?.data ?? []).slice(0, 5).map((b) => (
+                  <div key={b.id} className="flex items-center justify-between py-2 text-sm">
+                    <div className="min-w-0">
+                      <p className="font-medium text-indigo-700 truncate">#{b.invoiceNumber}</p>
+                      <p className="text-xs text-gray-400 truncate">{b.customer?.name ?? 'Walk-in'} · {formatDate(b.billDate)}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-semibold">{formatCurrency(b.totalAmount)}</span>
+                      <BillStatusBadge status={b.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+          <Card>
+            <h3 className="font-semibold text-gray-900 mb-3">Low / Out of Stock</h3>
+            {(() => {
+              const low = (products.data?.data ?? []).filter((p) => p.stockQuantity <= p.lowStockAlert).slice(0, 5);
+              return low.length === 0 ? (
+                <p className="text-sm text-gray-400">All products well stocked.</p>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {low.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between py-2 text-sm">
+                      <p className="font-medium text-gray-900 truncate">{p.name}</p>
+                      <Badge color={p.stockQuantity === 0 ? 'red' : 'yellow'}>
+                        {p.stockQuantity} {p.unitType}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </Card>
+        </div>
+        </div>
       )}
 
       {/* ── Products ── */}

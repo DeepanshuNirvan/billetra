@@ -23,6 +23,7 @@ type Business struct {
 	DefaultBillSize string    `gorm:"default:'a4_portrait'" json:"default_bill_size"`
 	InvoicePrefix   string    `gorm:"default:'INV'" json:"invoice_prefix"`
 	InvoiceCounter  int       `gorm:"default:1" json:"invoice_counter"`
+	ShowLogoOnBills bool      `gorm:"default:true" json:"show_logo_on_bills"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }

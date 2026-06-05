@@ -17,10 +17,11 @@ export const businessApi = {
   uploadLogo: async (file: File): Promise<{ logoUrl: string }> => {
     const form = new FormData();
     form.append('logo', file);
+    // Do NOT set Content-Type manually — axios must add the multipart boundary
+    // itself, otherwise the server can't parse the upload.
     const { data } = await apiClient.post<ApiResponse<{ logoUrl: string }>>(
       '/business/logo',
-      form,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      form
     );
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;

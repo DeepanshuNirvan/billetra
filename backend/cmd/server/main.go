@@ -80,7 +80,9 @@ func main() {
 
 	// Auth (public)
 	auth := api.Group("/auth")
-	auth.Post("/signup", authHandler.Signup)
+	// Public signup is intentionally disabled. Users are provisioned by a
+	// super_admin via /admin/users. The handler is kept for future re-enable.
+	// auth.Post("/signup", authHandler.Signup)
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/refresh", middleware.AuthRequired(), authHandler.Refresh)
 
@@ -90,6 +92,7 @@ func main() {
 	// Business
 	protected.Get("/business", businessHandler.Get)
 	protected.Put("/business", businessHandler.Update)
+	protected.Post("/business/logo", businessHandler.UploadLogo)
 
 	// Categories
 	protected.Get("/categories", categoryHandler.List)

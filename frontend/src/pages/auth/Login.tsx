@@ -1,7 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link } from 'react-router-dom';
 import { Zap, Mail, Lock } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -21,16 +20,10 @@ export default function Login() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
-
-  const fillDemo = () => {
-    setValue('email', 'demo@billetra.com');
-    setValue('password', 'Demo@1234');
-  };
 
   const onSubmit = async (data: FormData) => {
     await login.mutateAsync({ email: data.email, password: data.password });
@@ -98,27 +91,6 @@ export default function Login() {
               Sign in
             </Button>
           </form>
-
-          {/* Demo hint */}
-          <div className="mt-6 rounded-xl bg-indigo-50 border border-indigo-100 p-4">
-            <p className="text-xs font-semibold text-indigo-700 mb-1">Demo Credentials</p>
-            <p className="text-xs text-indigo-600">Email: demo@billetra.com</p>
-            <p className="text-xs text-indigo-600">Password: Demo@1234</p>
-            <button
-              type="button"
-              onClick={fillDemo}
-              className="mt-2 text-xs font-medium text-indigo-700 underline hover:text-indigo-900"
-            >
-              Click to fill demo credentials
-            </button>
-          </div>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-indigo-600 font-semibold hover:text-indigo-700">
-              Sign up free
-            </Link>
-          </p>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">

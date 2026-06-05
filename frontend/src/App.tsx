@@ -9,7 +9,9 @@ import { useAuthStore } from './store/authStore';
 
 // Lazy-loaded pages
 const Login = lazy(() => import('./pages/auth/Login'));
-const Signup = lazy(() => import('./pages/auth/Signup'));
+// Public signup is disabled for now (users are provisioned by an admin).
+// Keep the page + route ready for future re-enable.
+// const Signup = lazy(() => import('./pages/auth/Signup'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const BillList = lazy(() => import('./pages/bills/BillList'));
 const CreateBill = lazy(() => import('./pages/bills/CreateBill'));
@@ -67,7 +69,8 @@ export default function App() {
             <Routes>
               {/* Guest routes */}
               <Route path="/login" element={<RequireGuest><Login /></RequireGuest>} />
-              <Route path="/signup" element={<RequireGuest><Signup /></RequireGuest>} />
+              {/* Signup disabled — provisioned by admin. Redirect any stale links. */}
+              <Route path="/signup" element={<Navigate to="/login" replace />} />
 
               {/* Protected routes */}
               <Route element={<RequireAuth><AppLayout /></RequireAuth>}>

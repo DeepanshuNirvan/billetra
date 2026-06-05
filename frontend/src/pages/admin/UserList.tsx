@@ -7,14 +7,25 @@ import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageSpinner } from '../../components/ui/Spinner';
-import { useAdminUsers } from '../../hooks/useAdmin';
+import { useAdminUsers, useUpdateUser } from '../../hooks/useAdmin';
 import { formatDate } from '../../utils/format';
+import { toast } from '../../store/uiStore';
 import type { AdminUser } from '../../types';
 
 export default function AdminUserList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const { data, isLoading } = useAdminUsers({ search: search || undefined });
+  const updateUser = useUpdateUser();
+
+  const toggleActive = async (u: AdminUser) => {
+    try {
+      await updateUser.mutateAsync({ id: u.id, data: { is_active: !u.isActive } });
+      toast.success(u.isActive ? 'User deactivated' : 'User activated');
+    } catch (e) {
+      toast.error('Failed to update user', (e as Error).message);
+    }
+  };
 
   const users: AdminUser[] = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -53,13 +64,28 @@ export default function AdminUserList() {
       key: 'status',
       header: 'Status',
       cell: (u: AdminUser) => (
-        <Badge color={u.is_active ? 'green' : 'red'}>{u.is_active ? 'Active' : 'Suspended'}</Badge>
+        <Badge color={u.isActive ? 'green' : 'red'}>{u.isActive ? 'Active' : 'Suspended'}</Badge>
       ),
     },
     {
       key: 'created',
       header: 'Joined',
-      cell: (u: AdminUser) => <span className="text-sm text-gray-500">{formatDate(u.created_at)}</span>,
+      cell: (u: AdminUser) => <span className="text-sm text-gray-500">{formatDate(u.createdAt)}</span>,
+    },
+    {
+      key: 'action',
+      header: '',
+      cell: (u: AdminUser) =>
+        u.role === 'super_admin' ? null : (
+          <Button
+            size="sm"
+            variant={u.isActive ? 'danger' : 'primary'}
+            loading={updateUser.isPending}
+            onClick={(e) => { e.stopPropagation(); toggleActive(u); }}
+          >
+            {u.isActive ? 'Deactivate' : 'Activate'}
+          </Button>
+        ),
     },
   ];
 

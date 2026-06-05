@@ -44,7 +44,7 @@ export const adminApi = {
     return data.data;
   },
 
-  createUser: async (input: { email: string; password: string; name: string; phone?: string }): Promise<AdminUser> => {
+  createUser: async (input: { email: string; password: string; name: string; phone?: string; businessName?: string }): Promise<AdminUser> => {
     const { data } = await apiClient.post<ApiResponse<AdminUser>>('/admin/users', input);
     if (!data.success || !data.data) throw new Error(data.error ?? 'Failed');
     return data.data;

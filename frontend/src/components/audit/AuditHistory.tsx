@@ -48,20 +48,20 @@ export function AuditHistory({ entityType, entityId }: Props) {
                 </span>
                 <span className="text-xs text-gray-400 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {formatDate(log.created_at)}
+                  {formatDate(log.createdAt)}
                 </span>
               </div>
-              {log.user_id && (
+              {log.userId && (
                 <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
                   <User className="h-3 w-3" />
-                  User #{log.user_id}
+                  User #{log.userId}
                 </p>
               )}
-              {log.new_data && Object.keys(log.new_data).length > 0 && (
+              {log.newData && Object.keys(log.newData).length > 0 && (
                 <details className="mt-2">
                   <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">View changes</summary>
                   <pre className="mt-1 text-xs bg-gray-50 rounded p-2 overflow-auto max-h-32 text-gray-700">
-                    {JSON.stringify(log.new_data, null, 2)}
+                    {JSON.stringify(log.newData, null, 2)}
                   </pre>
                 </details>
               )}
