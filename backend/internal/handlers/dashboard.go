@@ -34,6 +34,16 @@ type DashboardResponse struct {
 	SalesChart       []repository.ChartPoint  `json:"sales_chart"`
 	MonthlyRevenue   []repository.MonthPoint  `json:"monthly_revenue"`
 	OverdueAging     *repository.AgingBuckets `json:"overdue_aging"`
+
+	AvgBillValue          float64 `json:"avg_bill_value"`
+	WeekSales             float64 `json:"week_sales"`
+	LastWeekSales         float64 `json:"last_week_sales"`
+	PartialBills          int64   `json:"partial_bills"`
+	OverdueBills          int64   `json:"overdue_bills"`
+	CancelledBills        int64   `json:"cancelled_bills"`
+	TotalCustomers        int64   `json:"total_customers"`
+	TotalProducts         int64   `json:"total_products"`
+	NewCustomersThisMonth int64   `json:"new_customers_this_month"`
 }
 
 func (h *DashboardHandler) Get(c *fiber.Ctx) error {
@@ -64,6 +74,10 @@ func (h *DashboardHandler) Get(c *fiber.Ctx) error {
 	salesChart, _ := h.billRepo.GetSalesChart(userID, 30)
 	monthlyRevenue, _ := h.billRepo.GetMonthlyRevenue(userID, 6)
 	overdueAging, _ := h.billRepo.GetOverdueAging(userID)
+	extras, err := h.billRepo.GetDashboardExtras(userID)
+	if err != nil || extras == nil {
+		extras = &repository.DashboardExtras{}
+	}
 
 	return utils.OK(c, DashboardResponse{
 		TodaySales:       stats.TodaySales,
@@ -82,5 +96,15 @@ func (h *DashboardHandler) Get(c *fiber.Ctx) error {
 		SalesChart:       salesChart,
 		MonthlyRevenue:   monthlyRevenue,
 		OverdueAging:     overdueAging,
+
+		AvgBillValue:          extras.AvgBillValue,
+		WeekSales:             extras.WeekSales,
+		LastWeekSales:         extras.LastWeekSales,
+		PartialBills:          extras.PartialBills,
+		OverdueBills:          extras.OverdueBills,
+		CancelledBills:        extras.CancelledBills,
+		TotalCustomers:        extras.TotalCustomers,
+		TotalProducts:         extras.TotalProducts,
+		NewCustomersThisMonth: extras.NewCustomersThisMonth,
 	})
 }

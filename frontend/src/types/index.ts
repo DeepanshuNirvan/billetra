@@ -160,6 +160,15 @@ export interface DashboardData {
     days6190: number;
     days90Plus: number;
   } | null;
+  avgBillValue: number;
+  weekSales: number;
+  lastWeekSales: number;
+  partialBills: number;
+  overdueBills: number;
+  cancelledBills: number;
+  totalCustomers: number;
+  totalProducts: number;
+  newCustomersThisMonth: number;
 }
 
 export interface AuditLogEntry {

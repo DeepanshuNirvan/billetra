@@ -12,8 +12,8 @@ Sized for: ~4–5 users, ~4–5 bills/day. Products, customers, bills all manage
 |-------|---------|-----------|-----|
 | **Database** (Postgres) | [Neon](https://neon.tech) | 0.5 GB, no time limit, no card | Persistent. Does **not** expire after 90 days (Render/Supabase do worse). Auto-sleeps compute but wakes on connect. |
 | **Backend** (Go API) | [Render](https://render.com) Web Service | 750 hrs/month, no card | 750 hrs ≈ one always-on service for a full month. Simple Git deploy. |
-| **Frontend** (React) | [Vercel](https://vercel.com) | Generous static hosting, no card | Best Vite support. Free custom domain + HTTPS. |
-| **Domain** | your registrar | (you buy this) | Point it at Vercel. |
+| **Frontend** (React) | [Vercel](https://vercel.com) | Generous static hosting, no card | Best Vite support. Free custom domain + HTTPS. Also **proxies `/api` to the backend** so everything lives on one domain (no CORS). |
+| **Domain** | your registrar | (you buy this) | Point it at Vercel. Frontend at `/`, backend at `/api/*` via Vercel rewrite — one domain, no subdomain needed. |
 | **Keep-alive** (optional) | [cron-job.org](https://cron-job.org) | free | Pings backend so it never cold-starts. |
 
 **Total cost: $0** (only the domain, ~₹800/yr, which you already plan to buy).
@@ -85,7 +85,7 @@ Sized for: ~4–5 users, ~4–5 bills/day. Products, customers, bills all manage
    | `DB_SSLMODE` | `require` |
    | `JWT_SECRET` | a long random string — generate below |
    | `ENV` | `production` |
-   | `FRONTEND_URL` | `https://yourdomain.com` *(set after Step 5; can update later)* |
+   | `FRONTEND_URL` | `https://yourdomain.com` *(set after Section 6; can update later)* |
 
    Generate a strong `JWT_SECRET`:
    ```bash
@@ -107,7 +107,21 @@ Sized for: ~4–5 users, ~4–5 bills/day. Products, customers, bills all manage
 
 ---
 
-## 5. Frontend — Vercel
+## 5. Frontend — Vercel (single domain, recommended)
+
+You bought **one** domain and want **both** frontend and backend on it. The clean free way: serve the React app at `yourdomain.com` and **proxy `/api/*` through Vercel to the Render backend**. Same origin → no CORS, no second subdomain, and the frontend needs **no env var**.
+
+### Routing model (what hits what)
+
+| You open in browser | Served by | Notes |
+|---------------------|-----------|-------|
+| `https://yourdomain.com/` and all app routes (`/bills`, `/settings`, …) | Vercel static (React) | SPA |
+| `https://yourdomain.com/api/...` | Vercel **rewrites** → `https://billetra-backend.onrender.com/api/...` | Same-origin to the browser; Vercel forwards server-side |
+| `https://billetra-backend.onrender.com/health` | Render (direct) | Only used by the keep-alive cron |
+
+So the **single route the frontend hits is `/api`** (relative). The browser never talks to Render directly, so there is **no CORS** to fight.
+
+### Steps
 
 1. Vercel → **Add New → Project** → import your GitHub repo.
 2. Settings:
@@ -115,40 +129,57 @@ Sized for: ~4–5 users, ~4–5 bills/day. Products, customers, bills all manage
    - **Framework Preset**: `Vite` (auto-detected)
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-3. **Environment Variable**:
+3. **Environment Variable**: **none needed.** The API client defaults to the relative path `/api` when `VITE_API_URL` is unset (`BASE_URL = import.meta.env.VITE_API_URL ?? '/api'`). Leave it blank.
+4. **`frontend/vercel.json`** already exists in the repo with this content — just edit the backend URL:
+   ```json
+   {
+     "rewrites": [
+       { "source": "/api/(.*)", "destination": "https://YOUR-BACKEND.onrender.com/api/$1" },
+       { "source": "/(.*)", "destination": "/index.html" }
+     ]
+   }
+   ```
+   Replace `YOUR-BACKEND.onrender.com` with **your** Render URL from Step 4, commit, push. The API rule (must stay **first**) makes `yourdomain.com/api/...` reach the backend; the catch-all fixes refresh-on-`/bills` 404s.
+5. Commit + push → **Deploy**. You get `https://billetra.vercel.app` (replaced by your domain in Step 6). Open it, log in.
 
-   | Key | Value |
-   |-----|-------|
-   | `VITE_API_URL` | `https://billetra-backend.onrender.com/api` |
-
-   > Note the `/api` suffix — the frontend calls `VITE_API_URL` directly. Must include it.
-4. **Deploy**. You get a URL like `https://billetra.vercel.app`. Open it, log in.
-
-### SPA routing fix (important)
-React Router needs all paths to serve `index.html`, else refresh on `/dashboard` 404s. Create **`frontend/vercel.json`**:
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
-}
-```
-Commit + push → Vercel redeploys.
+> **Why not point `VITE_API_URL` straight at Render?** That works (Option B below) but makes the browser call a *different* origin → you must keep CORS in sync forever. The proxy keeps everything on one origin and one domain — simpler and what you asked for.
 
 ---
 
-## 6. Custom Domain + finishing CORS
+## 6. Custom Domain + CORS
 
-1. **Vercel → Project → Settings → Domains** → add `yourdomain.com` (and `www`). Vercel shows the DNS records.
+1. **Vercel → Project → Settings → Domains** → add `yourdomain.com` (and optionally `www`). Vercel shows the DNS records.
 2. At your **registrar**, add the records Vercel gives you:
-   - `A` record `@` → Vercel IP, **or**
-   - `CNAME` `www` → `cname.vercel-dns.com`
+   - `A` record `@` → Vercel IP, **or** `CNAME` `www` → `cname.vercel-dns.com`
    - (Vercel's panel tells you exactly.) HTTPS is automatic.
-3. **Update backend CORS**: go back to Render → env var `FRONTEND_URL` = `https://yourdomain.com` → save (auto-redeploys).
-   > CORS allows exactly one origin. If you use both `yourdomain.com` and `www.yourdomain.com`, pick one canonical (redirect the other in Vercel) and set `FRONTEND_URL` to that one.
+3. Pick **one** canonical host (e.g. `yourdomain.com`) and redirect `www` to it in Vercel → Domains.
+4. **Backend `FRONTEND_URL`**: on Render set `FRONTEND_URL` = `https://yourdomain.com`.
+   > With the Vercel proxy the browser is same-origin, so CORS rarely fires — but the backend still reads `FRONTEND_URL`, so set it correctly. Must be the exact scheme+host, no trailing slash, no path.
 
 ### Keep-alive (kill cold starts)
 1. [cron-job.org](https://cron-job.org) → free account → **Create cronjob**.
-2. URL: `https://billetra-backend.onrender.com/health`
-3. Interval: every **14 minutes**. Done — backend stays warm.
+2. URL: `https://billetra-backend.onrender.com/health` *(hit Render **directly**, not through the proxy).*
+3. Interval: every **14 minutes**. Backend stays warm.
+
+---
+
+## 6b. Alternative — API on a subdomain (Option B)
+
+If you'd rather not proxy, put the backend on `api.yourdomain.com`:
+
+1. Render → your service → **Settings → Custom Domains** → add `api.yourdomain.com`. Add the `CNAME` it shows at your registrar (`api` → `your-service.onrender.com`).
+2. Vercel `frontend/vercel.json` keeps **only** the SPA rule:
+   ```json
+   { "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+   ```
+3. Frontend env var on Vercel:
+
+   | Key | Value |
+   |-----|-------|
+   | `VITE_API_URL` | `https://api.yourdomain.com/api` |
+4. Render `FRONTEND_URL` = `https://yourdomain.com` (now a real cross-origin call, so CORS must match exactly).
+
+Use **Section 5 (proxy)** unless you have a reason to expose the API host. Don't do both at once.
 
 ---
 
@@ -202,9 +233,12 @@ No SSH, no manual deploy.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Login/API calls fail, browser console shows **CORS** error | `FRONTEND_URL` ≠ actual frontend origin | Set Render `FRONTEND_URL` to the exact `https://...` you open in the browser |
+| All `/api/...` calls return **404** (page loads, login fails) | `vercel.json` API rewrite missing/wrong, or wrong backend URL in `destination` | Check the `/api/(.*)` rewrite points at your real Render URL; redeploy |
+| `/api` calls hit Vercel's own 404 HTML, not JSON | API rewrite is **below** the SPA catch-all | API rule must come **first** in the `rewrites` array (Section 5, step 4) |
+| Login/API calls fail, console shows **CORS** error | Using subdomain (Option B) and `FRONTEND_URL` ≠ frontend origin | Set Render `FRONTEND_URL` to the exact `https://yourdomain.com`. (Proxy mode shouldn't hit this.) |
 | Backend log: `failed to connect to database ... SSL` | SSL mode wrong | `DB_SSLMODE=require` on Render |
-| Refreshing `/dashboard` shows 404 | SPA rewrite missing | Add `frontend/vercel.json` (Step 5) |
+| Refreshing `/bills` shows 404 | SPA rewrite missing | Add the catch-all rule to `frontend/vercel.json` (Section 5) |
+| Logo uploads but 413 / fails through proxy | file > limit | Logo capped at 2 MB server-side; use a smaller image |
 | First request of the day is very slow (~50s) | Render cold start | Set up keep-alive cron (Step 6) |
 | `relation "..." does not exist` | Migrations didn't run | Check Render startup logs for `Migrations applied successfully`; verify DB creds |
 | API returns 401 everywhere | `JWT_SECRET` changed/empty | Set a stable `JWT_SECRET`; don't rotate it casually (logs everyone out) |

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, TrendingDown, Calendar, AlertTriangle, Receipt, Plus, FileText } from 'lucide-react';
+import { TrendingUp, Calendar, AlertTriangle, Receipt, Plus, FileText, IndianRupee, CalendarDays, Users, Package } from 'lucide-react';
 import { StatCard } from '../components/dashboard/StatCard';
 import { SalesChart } from '../components/dashboard/SalesChart';
 import { MonthlyRevenueChart } from '../components/dashboard/MonthlyRevenueChart';
@@ -41,6 +41,19 @@ export default function Dashboard() {
     data.lastMonthSales > 0
       ? Math.round(((data.monthSales - data.lastMonthSales) / data.lastMonthSales) * 100)
       : 0;
+  const weekTrend =
+    data.lastWeekSales > 0
+      ? Math.round(((data.weekSales - data.lastWeekSales) / data.lastWeekSales) * 100)
+      : 0;
+
+  const paymentBreakdown = [
+    { label: 'Paid', value: data.paidBills, color: 'bg-emerald-500', text: 'text-emerald-600' },
+    { label: 'Partial', value: data.partialBills, color: 'bg-blue-500', text: 'text-blue-600' },
+    { label: 'Pending', value: data.pendingBills, color: 'bg-amber-500', text: 'text-amber-600' },
+    { label: 'Overdue', value: data.overdueBills, color: 'bg-red-500', text: 'text-red-600' },
+    { label: 'Cancelled', value: data.cancelledBills, color: 'bg-gray-400', text: 'text-gray-500' },
+  ];
+  const paymentTotal = paymentBreakdown.reduce((s, p) => s + (p.value ?? 0), 0);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -88,6 +101,65 @@ export default function Dashboard() {
           color="rose"
         />
       </div>
+
+      {/* Secondary KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="This Week"
+          value={formatCurrency(data.weekSales)}
+          icon={CalendarDays}
+          color="indigo"
+          trend={{ value: weekTrend, label: 'vs last week' }}
+        />
+        <StatCard
+          title="Avg Bill Value"
+          value={formatCurrency(data.avgBillValue)}
+          subtitle="This month"
+          icon={IndianRupee}
+          color="emerald"
+        />
+        <StatCard
+          title="Customers"
+          value={String(data.totalCustomers)}
+          subtitle={`+${data.newCustomersThisMonth} this month`}
+          icon={Users}
+          color="amber"
+        />
+        <StatCard
+          title="Products"
+          value={String(data.totalProducts)}
+          subtitle={`${data.lowStockProducts?.length ?? 0} low stock`}
+          icon={Package}
+          color="rose"
+        />
+      </div>
+
+      {/* Payment status breakdown */}
+      <Card>
+        <CardHeader title="Payment Status" subtitle="Bills by current status" />
+        <div className="flex w-full h-3 rounded-full overflow-hidden bg-gray-100">
+          {paymentTotal > 0 &&
+            paymentBreakdown.map(
+              (p) =>
+                p.value > 0 && (
+                  <div
+                    key={p.label}
+                    className={p.color}
+                    style={{ width: `${(p.value / paymentTotal) * 100}%` }}
+                    title={`${p.label}: ${p.value}`}
+                  />
+                )
+            )}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
+          {paymentBreakdown.map((p) => (
+            <div key={p.label} className="text-center">
+              <p className={`text-lg font-bold ${p.text}`}>{p.value}</p>
+              <p className="text-xs text-gray-400">{p.label}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Sales trend + Bill summary */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

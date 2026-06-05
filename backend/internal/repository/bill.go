@@ -309,6 +309,56 @@ func (r *BillRepository) GetLastMonthSales(userID string) (float64, error) {
 	return result.Amount, nil
 }
 
+// DashboardExtras holds additional analytics shown on the dashboard.
+type DashboardExtras struct {
+	AvgBillValue          float64 `json:"avg_bill_value"`
+	WeekSales             float64 `json:"week_sales"`
+	LastWeekSales         float64 `json:"last_week_sales"`
+	PartialBills          int64   `json:"partial_bills"`
+	OverdueBills          int64   `json:"overdue_bills"`
+	CancelledBills        int64   `json:"cancelled_bills"`
+	TotalCustomers        int64   `json:"total_customers"`
+	TotalProducts         int64   `json:"total_products"`
+	NewCustomersThisMonth int64   `json:"new_customers_this_month"`
+}
+
+func (r *BillRepository) GetDashboardExtras(userID string) (*DashboardExtras, error) {
+	var e DashboardExtras
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+
+	// ISO week start (Monday) for this week and last week.
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7 // treat Sunday as last day of week
+	}
+	startOfWeek := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -(weekday - 1))
+	startOfLastWeek := startOfWeek.AddDate(0, 0, -7)
+
+	// Average bill value this month (non-cancelled).
+	r.db.Model(&models.Bill{}).
+		Where("user_id = ? AND bill_date >= ? AND status != 'cancelled'", userID, startOfMonth).
+		Select("COALESCE(AVG(total_amount),0)").Scan(&e.AvgBillValue)
+
+	r.db.Model(&models.Bill{}).
+		Where("user_id = ? AND bill_date >= ? AND status != 'cancelled'", userID, startOfWeek).
+		Select("COALESCE(SUM(total_amount),0)").Scan(&e.WeekSales)
+
+	r.db.Model(&models.Bill{}).
+		Where("user_id = ? AND bill_date >= ? AND bill_date < ? AND status != 'cancelled'", userID, startOfLastWeek, startOfWeek).
+		Select("COALESCE(SUM(total_amount),0)").Scan(&e.LastWeekSales)
+
+	r.db.Model(&models.Bill{}).Where("user_id = ? AND status = 'partial'", userID).Count(&e.PartialBills)
+	r.db.Model(&models.Bill{}).Where("user_id = ? AND status = 'overdue'", userID).Count(&e.OverdueBills)
+	r.db.Model(&models.Bill{}).Where("user_id = ? AND status = 'cancelled'", userID).Count(&e.CancelledBills)
+
+	r.db.Table("customers").Where("user_id = ?", userID).Count(&e.TotalCustomers)
+	r.db.Table("products").Where("user_id = ?", userID).Count(&e.TotalProducts)
+	r.db.Table("customers").Where("user_id = ? AND created_at >= ?", userID, startOfMonth).Count(&e.NewCustomersThisMonth)
+
+	return &e, nil
+}
+
 // SalesReportRow matches the frontend SalesReportRow type exactly.
 // JSON keys are camelCase because the Axios client transforms snake_case → camelCase.
 type SalesReportRow struct {
