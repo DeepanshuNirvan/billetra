@@ -334,7 +334,8 @@ export function BillForm({ existingBill }: BillFormProps) {
             {errors.items ?? errors.itemNames ?? errors.itemQty}
           </div>
         )}
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
@@ -367,6 +368,23 @@ export function BillForm({ existingBill }: BillFormProps) {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile stacked cards */}
+        <div className="md:hidden p-4 space-y-3">
+          {items.map((item, i) => (
+            <BillItemRow
+              key={i}
+              layout="card"
+              item={item}
+              index={i}
+              products={products}
+              onChange={handleItemChange}
+              onRemove={handleRemoveItem}
+              gstOnWhole={gstOnWhole}
+              billGstRate={billGstRate}
+            />
+          ))}
         </div>
         <div className="px-5 py-4 border-t border-gray-50">
           <Button type="button" variant="ghost" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={handleAddItem}>
@@ -479,21 +497,22 @@ export function BillForm({ existingBill }: BillFormProps) {
       </div>
 
       {/* Action buttons */}
-      <div className="flex flex-wrap items-center justify-end gap-3 pb-6">
-        <Button variant="outline" onClick={() => navigate('/bills')}>
+      <div className="grid grid-cols-2 md:flex md:flex-wrap md:items-center md:justify-end gap-3 pb-6">
+        <Button variant="outline" className="w-full md:w-auto" onClick={() => navigate('/bills')}>
           Cancel
         </Button>
         <Button
           variant="outline"
+          className="w-full md:w-auto"
           leftIcon={<Eye className="h-4 w-4" />}
           onClick={() => setShowPreview(true)}
         >
           Preview
         </Button>
-        <Button variant="secondary" loading={isSaving} onClick={handleSave}>
+        <Button variant="secondary" className="w-full md:w-auto" loading={isSaving} onClick={handleSave}>
           Save Draft
         </Button>
-        <Button variant="primary" loading={isSaving} onClick={handleSaveAndDownload}>
+        <Button variant="primary" className="w-full md:w-auto" loading={isSaving} onClick={handleSaveAndDownload}>
           Save & Download PDF
         </Button>
       </div>

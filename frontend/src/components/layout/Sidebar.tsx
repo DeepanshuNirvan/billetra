@@ -1,12 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Package, Users, Wallet,
-  BarChart3, Settings, LogOut, ChevronLeft, Zap, Shield,
+  BarChart3, Settings, LogOut, ChevronLeft, Shield,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../store/authStore';
 import { useLogout } from '../../hooks/useAuth';
 import { useUIStore } from '../../store/uiStore';
+import { Logo } from '../ui/Logo';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -33,18 +34,12 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
         {sidebarOpen && (
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center flex-shrink-0">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-gray-900">Billetra</span>
+          <div className="flex items-center gap-2.5">
+            <Logo variant="mark" size={34} />
+            <span className="text-lg font-bold tracking-tight text-gray-900">Billetra</span>
           </div>
         )}
-        {!sidebarOpen && (
-          <div className="h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center mx-auto">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
-        )}
+        {!sidebarOpen && <Logo variant="mark" size={32} className="mx-auto" />}
         {sidebarOpen && (
           <button
             onClick={toggleSidebar}

@@ -30,7 +30,7 @@ const accountColors: Record<string, string> = {
   cash: 'bg-green-50 text-green-600',
   current: 'bg-orange-50 text-orange-600',
   credit: 'bg-red-50 text-red-600',
-  wallet: 'bg-indigo-50 text-indigo-600',
+  wallet: 'bg-primary-50 text-primary-600',
 };
 
 const schema = z.object({
@@ -82,7 +82,7 @@ function AccountCard({ account, onEdit, onDelete, onSetDefault }: {
               <Star className="h-4 w-4" />
             </button>
           )}
-          <button className="rounded-lg p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" onClick={onEdit}>
+          <button className="rounded-lg p-1.5 text-gray-400 hover:bg-primary-50 hover:text-primary-600 transition-colors" onClick={onEdit}>
             <Edit className="h-4 w-4" />
           </button>
           <button className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors" onClick={onDelete}>
@@ -198,7 +198,7 @@ export default function AccountList() {
           <Input label="Account Name" {...register('name')} error={errors.name?.message} required placeholder="e.g. SBI Current Account" />
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Account Type <span className="text-red-500">*</span></label>
-            <select {...register('accountType')} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select {...register('accountType')} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
               <option value="bank">Bank Account</option>
               <option value="upi">UPI</option>
               <option value="cash">Cash</option>
@@ -213,7 +213,7 @@ export default function AccountList() {
           <Input label="Branch" {...register('branch')} placeholder="e.g. Mumbai - Andheri" />
           <Input label="Opening Balance (₹)" type="number" {...register('balance')} />
           <div className="flex items-center gap-2">
-            <input type="checkbox" id="isDefault" {...register('isDefault')} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+            <input type="checkbox" id="isDefault" {...register('isDefault')} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
             <label htmlFor="isDefault" className="text-sm text-gray-700">Set as default account</label>
           </div>
         </form>

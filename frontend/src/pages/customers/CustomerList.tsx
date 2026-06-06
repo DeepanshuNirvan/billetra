@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Users, Edit, Trash2 } from 'lucide-react';
+import { clsx } from 'clsx';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Table, Pagination } from '../../components/ui/Table';
@@ -77,7 +78,7 @@ export default function CustomerList() {
       cell: (c: Customer) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
             onClick={(e) => { e.stopPropagation(); setEditCustomer(c); setShowForm(true); }}
           >
             <Edit className="h-4 w-4" />
@@ -143,6 +144,34 @@ export default function CustomerList() {
             keyExtractor={(c) => c.id}
             onRowClick={(c) => navigate(`/customers/${c.id}`)}
             loading={isLoading}
+            renderMobileCard={(c) => (
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{c.name}</p>
+                    {c.phone && <p className="text-sm text-gray-600 mt-0.5">{c.phone}</p>}
+                    {c.state && <p className="text-xs text-gray-400 mt-0.5">{c.state}</p>}
+                  </div>
+                  <Badge color={c.isActive ? 'green' : 'gray'}>{c.isActive ? 'Active' : 'Inactive'}</Badge>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                  <div>
+                    <p className="text-xs text-gray-400">Outstanding</p>
+                    <p className={clsx('font-semibold tabular-nums', c.outstandingBalance > 0 ? 'text-red-600' : 'text-gray-500')}>
+                      {c.outstandingBalance > 0 ? formatCurrency(c.outstandingBalance) : '-'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="outline" size="sm" leftIcon={<Edit className="h-4 w-4" />} onClick={(e) => { e.stopPropagation(); setEditCustomer(c); setShowForm(true); }}>
+                      Edit
+                    </Button>
+                    <Button variant="outline" size="sm" leftIcon={<Trash2 className="h-4 w-4" />} onClick={(e) => { e.stopPropagation(); setDeleteId(c.id); }}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           />
           {totalPages > 1 && (
             <Pagination page={page} totalPages={totalPages} total={total} limit={20} onPageChange={setPage} />

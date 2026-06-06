@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Package, AlertTriangle, Edit, Trash2 } from 'lucide-react';
+import { clsx } from 'clsx';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Table, Pagination } from '../../components/ui/Table';
@@ -55,8 +56,8 @@ export default function ProductList() {
       header: 'Product',
       cell: (p: Product) => (
         <div className="flex items-start gap-2">
-          <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-            <Package className="h-4 w-4 text-indigo-400" />
+          <div className="h-8 w-8 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
+            <Package className="h-4 w-4 text-primary-400" />
           </div>
           <div>
             <p className="font-medium text-gray-900">{p.name}</p>
@@ -110,7 +111,7 @@ export default function ProductList() {
       cell: (p: Product) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
             onClick={(e) => handleEdit(p, e)}
           >
             <Edit className="h-4 w-4" />
@@ -150,7 +151,7 @@ export default function ProductList() {
         <select
           value={categoryId}
           onChange={(e) => { setCategoryId(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
         >
           <option value="">All Categories</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -189,6 +190,46 @@ export default function ProductList() {
             keyExtractor={(p) => p.id}
             onRowClick={(p) => navigate(`/products/${p.id}`)}
             loading={isLoading}
+            renderMobileCard={(p) => (
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="h-9 w-9 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
+                      <Package className="h-5 w-5 text-primary-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{p.name}</p>
+                      <p className="text-xs text-gray-400">{p.category?.name ?? 'Uncategorized'}{p.sku ? ` · ${p.sku}` : ''}</p>
+                    </div>
+                  </div>
+                  {getStockBadge(p)}
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-400">Price</p>
+                    <p className="font-semibold text-gray-900 tabular-nums">{formatCurrency(p.sellingPrice)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">GST</p>
+                    <p className="font-medium text-gray-700">{p.gstRate}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Stock</p>
+                    <p className={clsx('font-semibold tabular-nums', p.stockQuantity === 0 ? 'text-red-600' : p.stockQuantity <= p.lowStockAlert ? 'text-amber-600' : 'text-gray-700')}>
+                      {p.stockQuantity} {p.unitType}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>
+                  <Button variant="outline" size="sm" className="flex-1" leftIcon={<Edit className="h-4 w-4" />} onClick={(e) => handleEdit(p, e)}>
+                    Edit
+                  </Button>
+                  <Button variant="outline" size="sm" leftIcon={<Trash2 className="h-4 w-4" />} onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}>
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            )}
           />
           {totalPages > 1 && (
             <Pagination page={page} totalPages={totalPages} total={total} limit={20} onPageChange={setPage} />

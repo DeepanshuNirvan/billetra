@@ -65,7 +65,7 @@ export default function InventoryReport() {
     { key: 'alert', header: 'Alert At', cell: (r: InventoryReportRow) => r.lowStockAlert },
     { key: 'purchasePrice', header: 'Purchase Price', cell: (r: InventoryReportRow) => formatCurrency(r.purchasePrice) },
     { key: 'sellingPrice', header: 'Selling Price', cell: (r: InventoryReportRow) => formatCurrency(r.sellingPrice) },
-    { key: 'stockValue', header: 'Stock Value', cell: (r: InventoryReportRow) => <span className="font-semibold text-indigo-700">{formatCurrency(r.stockValue)}</span> },
+    { key: 'stockValue', header: 'Stock Value', cell: (r: InventoryReportRow) => <span className="font-semibold text-primary-700">{formatCurrency(r.stockValue)}</span> },
     { key: 'status', header: 'Status', cell: (r: InventoryReportRow) => getStockStatus(r) },
   ];
 
@@ -83,7 +83,7 @@ export default function InventoryReport() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Products', value: String(data.length), color: 'text-gray-900' },
-          { label: 'Stock Value', value: formatCurrency(totalStockValue), color: 'text-indigo-700' },
+          { label: 'Stock Value', value: formatCurrency(totalStockValue), color: 'text-primary-700' },
           { label: 'Low Stock', value: String(lowStockCount), color: 'text-amber-600' },
           { label: 'Out of Stock', value: String(outOfStockCount), color: 'text-red-600' },
         ].map(({ label, value, color }) => (

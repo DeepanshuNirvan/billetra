@@ -90,7 +90,7 @@ export default function BillList() {
       key: 'invoice',
       header: 'Invoice #',
       cell: (bill: Bill) => (
-        <span className="font-semibold text-indigo-700">#{bill.invoiceNumber}</span>
+        <span className="font-semibold text-primary-700">#{bill.invoiceNumber}</span>
       ),
     },
     {
@@ -142,7 +142,7 @@ export default function BillList() {
             <Eye className="h-4 w-4" />
           </button>
           <button
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
             onClick={(e) => handleDownloadPdf(bill, e)}
             title="Download PDF"
           >
@@ -191,7 +191,7 @@ export default function BillList() {
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
         >
           {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -199,14 +199,14 @@ export default function BillList() {
           type="date"
           value={startDate}
           onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
           placeholder="From date"
         />
         <input
           type="date"
           value={endDate}
           onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
           placeholder="To date"
         />
         {(search || status || startDate || endDate) && (
@@ -236,6 +236,29 @@ export default function BillList() {
             keyExtractor={(b) => b.id}
             onRowClick={(b) => navigate(`/bills/${b.id}`)}
             loading={isLoading}
+            renderMobileCard={(bill) => (
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-primary-700">#{bill.invoiceNumber}</p>
+                    <p className="font-medium text-gray-900 truncate">{bill.customer?.name ?? 'Walk-in'}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(bill.billDate)}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-bold text-gray-900 tabular-nums">{formatCurrency(bill.totalAmount)}</p>
+                    <div className="mt-1 flex justify-end"><BillStatusBadge status={bill.status} /></div>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>
+                  <Button variant="outline" size="sm" className="flex-1" leftIcon={<Eye className="h-4 w-4" />} onClick={() => navigate(`/bills/${bill.id}`)}>
+                    View
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1" leftIcon={<Download className="h-4 w-4" />} onClick={(e) => handleDownloadPdf(bill, e)}>
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            )}
           />
           {totalPages > 1 && (
             <Pagination

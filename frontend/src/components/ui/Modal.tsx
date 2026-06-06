@@ -37,19 +37,23 @@ export function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in" />
         <Dialog.Content
           className={clsx(
-            'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
-            'w-full rounded-xl bg-white shadow-xl',
-            'animate-in fade-in zoom-in-95 duration-200',
-            'max-h-[90vh] flex flex-col',
-            sizeClasses[size],
-            'mx-4'
+            // Mobile: bottom sheet. Desktop: centered dialog.
+            'fixed z-50 bg-white shadow-2xl flex flex-col',
+            'inset-x-0 bottom-0 w-full rounded-t-2xl max-h-[92vh] sheet-up',
+            'md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:-translate-x-1/2 md:-translate-y-1/2',
+            'md:rounded-2xl md:max-h-[90vh] md:mx-4 md:animate-in md:fade-in md:zoom-in-95 md:duration-200',
+            sizeClasses[size]
           )}
         >
+          {/* Mobile grab handle */}
+          <div className="md:hidden flex justify-center pt-2.5 pb-1">
+            <span className="h-1.5 w-10 rounded-full bg-gray-300" />
+          </div>
           {title && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100">
               <div>
                 <Dialog.Title className="text-lg font-semibold text-gray-900">{title}</Dialog.Title>
                 {description && (

@@ -136,7 +136,7 @@ export default function BillDetail() {
       {/* Quick summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Amount', value: formatCurrency(bill.totalAmount), color: 'text-indigo-700' },
+          { label: 'Total Amount', value: formatCurrency(bill.totalAmount), color: 'text-primary-700' },
           { label: 'Paid Amount', value: formatCurrency(bill.paidAmount), color: 'text-green-600' },
           { label: 'Balance Due', value: formatCurrency(Math.max(0, bill.totalAmount - bill.paidAmount)), color: 'text-red-600' },
           { label: 'Tax Total', value: formatCurrency(bill.totalTax), color: 'text-gray-900' },

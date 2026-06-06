@@ -1,9 +1,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, Mail, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { Logo } from '../../components/ui/Logo';
 import { useLogin } from '../../hooks/useAuth';
 
 const schema = z.object({
@@ -30,16 +31,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-emerald-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg">
-              <Zap className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">Billetra</span>
-          </div>
+          <Logo variant="full" size={92} />
         </div>
 
         {/* Card */}
@@ -73,11 +69,11 @@ export default function Login() {
                 <input
                   type="checkbox"
                   {...register('rememberMe')}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="text-sm text-gray-600">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+              <a href="#" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                 Forgot password?
               </a>
             </div>

@@ -76,7 +76,7 @@ export function BulkUpload({ open, onClose }: BulkUploadProps) {
         <div
           className={clsx(
             'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors',
-            dragOver ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+            dragOver ? 'border-primary-400 bg-primary-50' : 'border-gray-200 hover:border-gray-300'
           )}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
@@ -91,7 +91,7 @@ export function BulkUpload({ open, onClose }: BulkUploadProps) {
           <Upload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
           {selectedFile ? (
             <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
-              <FileText className="h-4 w-4 text-indigo-500" />
+              <FileText className="h-4 w-4 text-primary-500" />
               <span className="font-medium">{selectedFile.name}</span>
             </div>
           ) : (

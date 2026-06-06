@@ -150,7 +150,7 @@ export default function CustomerDetail() {
                   onClick={() => navigate(`/bills/${bill.id}`)}
                 >
                   <div>
-                    <p className="text-sm font-medium text-indigo-700">#{bill.invoiceNumber}</p>
+                    <p className="text-sm font-medium text-primary-700">#{bill.invoiceNumber}</p>
                     <p className="text-xs text-gray-400">{formatDate(bill.billDate)}</p>
                   </div>
                   <div className="flex items-center gap-2">

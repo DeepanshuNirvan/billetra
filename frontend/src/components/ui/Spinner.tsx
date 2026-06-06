@@ -11,7 +11,7 @@ const sizeMap = { sm: 'h-4 w-4', md: 'h-6 w-6', lg: 'h-8 w-8' };
 export function Spinner({ size = 'md', className }: SpinnerProps) {
   return (
     <Loader2
-      className={clsx('animate-spin text-indigo-600', sizeMap[size], className)}
+      className={clsx('animate-spin text-primary-600', sizeMap[size], className)}
     />
   );
 }

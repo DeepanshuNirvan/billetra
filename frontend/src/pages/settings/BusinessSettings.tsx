@@ -113,14 +113,14 @@ export default function BusinessSettings() {
               {business?.logoUrl ? (
                 <img src={business.logoUrl} alt="Logo" className="h-20 w-20 rounded-xl object-contain border border-gray-200" />
               ) : (
-                <div className="h-20 w-20 rounded-xl bg-indigo-50 border-2 border-dashed border-indigo-200 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-indigo-300" />
+                <div className="h-20 w-20 rounded-xl bg-primary-50 border-2 border-dashed border-primary-200 flex items-center justify-center">
+                  <Building2 className="h-8 w-8 text-primary-300" />
                 </div>
               )}
               <button
                 type="button"
                 onClick={() => logoRef.current?.click()}
-                className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow hover:bg-indigo-700 transition-colors"
+                className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-primary-600 text-white flex items-center justify-center shadow hover:bg-primary-700 transition-colors"
               >
                 <Camera className="h-3.5 w-3.5" />
               </button>
@@ -152,7 +152,7 @@ export default function BusinessSettings() {
             <input
               type="checkbox"
               {...register('showLogoOnBills')}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700">
               Show logo on invoices
@@ -181,7 +181,7 @@ export default function BusinessSettings() {
                 <label className="text-sm font-medium text-gray-700">State</label>
                 <select
                   {...register('state')}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Select state</option>
                   {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -207,7 +207,7 @@ export default function BusinessSettings() {
               <label className="text-sm font-medium text-gray-700">Default Bill Size</label>
               <select
                 {...register('defaultBillSize')}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {BILL_SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>

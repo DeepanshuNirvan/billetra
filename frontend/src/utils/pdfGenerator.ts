@@ -9,7 +9,7 @@ export function downloadBillPdf(bill: Bill, business?: Business | null) {
   const margin = 15;
 
   // Colors
-  const primaryColor: [number, number, number] = [79, 70, 229]; // indigo-600
+  const primaryColor: [number, number, number] = [79, 70, 229]; // primary-600
   const gray: [number, number, number] = [107, 114, 128];
   const darkGray: [number, number, number] = [17, 24, 39];
 

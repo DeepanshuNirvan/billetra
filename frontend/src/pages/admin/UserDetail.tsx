@@ -232,7 +232,7 @@ export default function AdminUserDetail() {
                       type="text"
                       value={bizForm[key] ?? ''}
                       onChange={(e) => setBizForm((p) => ({ ...p, [key]: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
                 ))}
@@ -273,7 +273,7 @@ export default function AdminUserDetail() {
                 {(bills.data?.data ?? []).slice(0, 5).map((b) => (
                   <div key={b.id} className="flex items-center justify-between py-2 text-sm">
                     <div className="min-w-0">
-                      <p className="font-medium text-indigo-700 truncate">#{b.invoiceNumber}</p>
+                      <p className="font-medium text-primary-700 truncate">#{b.invoiceNumber}</p>
                       <p className="text-xs text-gray-400 truncate">{b.customer?.name ?? 'Walk-in'} · {formatDate(b.billDate)}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -381,14 +381,14 @@ export default function AdminUserDetail() {
           />
           <Table<Bill>
             columns={[
-              { key: 'invoice', header: 'Invoice', cell: (b) => <span className="font-medium text-indigo-700">#{b.invoiceNumber}</span> },
+              { key: 'invoice', header: 'Invoice', cell: (b) => <span className="font-medium text-primary-700">#{b.invoiceNumber}</span> },
               { key: 'date', header: 'Date', cell: (b) => formatDate(b.billDate) },
               { key: 'customer', header: 'Customer', cell: (b) => b.customer?.name ?? 'Walk-in' },
               { key: 'total', header: 'Total', cell: (b) => <span className="font-semibold">{formatCurrency(b.totalAmount)}</span> },
               { key: 'status', header: 'Status', cell: (b) => <BillStatusBadge status={b.status} /> },
               { key: 'action', header: '', cell: (b) => (
                 <button
-                  className="text-indigo-600 hover:text-indigo-800 text-xs font-medium flex items-center gap-0.5"
+                  className="text-primary-600 hover:text-primary-800 text-xs font-medium flex items-center gap-0.5"
                   onClick={(e) => { e.stopPropagation(); setSelectedBillId(b.id); }}
                 >
                   Detail <ChevronRight className="h-3 w-3" />
@@ -433,18 +433,18 @@ export default function AdminUserDetail() {
               <div>
                 <label className="block text-xs text-gray-500 font-medium mb-1">Start Date</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 font-medium mb-1">End Date</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
               </div>
               {reportTab === 'sales' && (
                 <div>
                   <label className="block text-xs text-gray-500 font-medium mb-1">Group By</label>
                   <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as 'day' | 'month')}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
                     <option value="day">Daily</option>
                     <option value="month">Monthly</option>
                   </select>
@@ -458,7 +458,7 @@ export default function AdminUserDetail() {
             {(['sales', 'gst', 'inventory'] as const).map((rt) => (
               <button key={rt} onClick={() => setReportTab(rt)}
                 className={`pb-2 px-3 text-sm font-medium capitalize border-b-2 transition-colors ${
-                  reportTab === rt ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  reportTab === rt ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {rt === 'gst' ? 'GST' : rt.charAt(0).toUpperCase() + rt.slice(1)}
@@ -475,7 +475,7 @@ export default function AdminUserDetail() {
                 { key: 'subtotal', header: 'Subtotal', cell: (r) => formatCurrency(r.subtotal) },
                 { key: 'taxable', header: 'Taxable', cell: (r) => formatCurrency(r.taxable) },
                 { key: 'tax', header: 'Tax', cell: (r) => formatCurrency(r.cgst + r.sgst + r.igst) },
-                { key: 'total', header: 'Total', cell: (r) => <span className="font-bold text-indigo-700">{formatCurrency(r.total)}</span> },
+                { key: 'total', header: 'Total', cell: (r) => <span className="font-bold text-primary-700">{formatCurrency(r.total)}</span> },
               ]}
               data={salesReport.data ?? []}
               keyExtractor={(r, i) => String(i)}
@@ -488,7 +488,7 @@ export default function AdminUserDetail() {
           {reportTab === 'gst' && (
             <Table<GSTReportRow>
               columns={[
-                { key: 'invoice', header: 'Invoice #', cell: (r) => <span className="font-semibold text-indigo-700">#{r.invoiceNumber}</span> },
+                { key: 'invoice', header: 'Invoice #', cell: (r) => <span className="font-semibold text-primary-700">#{r.invoiceNumber}</span> },
                 { key: 'customer', header: 'Customer', cell: (r) => r.customerName },
                 { key: 'date', header: 'Date', cell: (r) => formatDate(r.billDate) },
                 { key: 'taxable', header: 'Taxable', cell: (r) => formatCurrency(r.taxable) },
@@ -522,7 +522,7 @@ export default function AdminUserDetail() {
                   </span>
                 )},
                 { key: 'price', header: 'Selling Price', cell: (r) => formatCurrency(r.sellingPrice) },
-                { key: 'value', header: 'Stock Value', cell: (r) => <span className="font-semibold text-indigo-700">{formatCurrency(r.stockValue)}</span> },
+                { key: 'value', header: 'Stock Value', cell: (r) => <span className="font-semibold text-primary-700">{formatCurrency(r.stockValue)}</span> },
                 { key: 'status', header: 'Status', cell: (r) => (
                   <Badge color={r.stockQuantity === 0 ? 'red' : r.isLowStock ? 'yellow' : 'green'}>
                     {r.stockQuantity === 0 ? 'Out of Stock' : r.isLowStock ? 'Low Stock' : 'In Stock'}
@@ -602,7 +602,7 @@ export default function AdminUserDetail() {
               {billDetail.isInterstate && billDetail.igstAmount > 0 && (
                 <TotalRow label="IGST" value={billDetail.igstAmount} />
               )}
-              <div className="border-t border-gray-200 pt-1 flex justify-between font-bold text-indigo-700">
+              <div className="border-t border-gray-200 pt-1 flex justify-between font-bold text-primary-700">
                 <span>Total</span>
                 <span>{formatCurrency(billDetail.totalAmount)}</span>
               </div>

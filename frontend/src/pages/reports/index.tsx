@@ -8,7 +8,7 @@ const reportTypes = [
     description: 'View daily/monthly sales breakdown with charts and export',
     icon: BarChart3,
     path: '/reports/sales',
-    color: 'bg-indigo-50 text-indigo-600',
+    color: 'bg-primary-50 text-primary-600',
   },
   {
     title: 'GST Report',

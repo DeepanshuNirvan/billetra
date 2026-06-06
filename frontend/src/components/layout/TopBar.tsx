@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Bell } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { ThemeSwitcher } from '../ui/ThemeSwitcher';
+import { Logo } from '../ui/Logo';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
@@ -47,10 +48,8 @@ export function TopBar({ actions }: TopBarProps) {
         <div className="md:hidden">
           {pathname === '/' && (
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-primary-600 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">B</span>
-              </div>
-              <span className="font-bold text-gray-900">Billetra</span>
+              <Logo variant="mark" size={28} />
+              <span className="font-bold tracking-tight text-gray-900">Billetra</span>
             </div>
           )}
           {pathname !== '/' && (

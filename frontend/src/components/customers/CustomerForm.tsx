@@ -104,7 +104,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
             <label className="text-sm font-medium text-gray-700">State</label>
             <select
               {...register('state')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Select state</option>
               {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -114,7 +114,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
             <label className="text-sm font-medium text-gray-700">Payment Terms</label>
             <select
               {...register('paymentTerms')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Select terms</option>
               {PAYMENT_TERMS.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -135,7 +135,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
             type="checkbox"
             id="custIsActive"
             {...register('isActive')}
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
           />
           <label htmlFor="custIsActive" className="text-sm text-gray-700">Active Customer</label>
         </div>

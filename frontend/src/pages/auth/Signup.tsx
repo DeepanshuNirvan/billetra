@@ -2,9 +2,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
-import { Zap, Mail, Lock, User, Building2 } from 'lucide-react';
+import { Mail, Lock, User, Building2 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { Logo } from '../../components/ui/Logo';
 import { useSignup } from '../../hooks/useAuth';
 
 const schema = z.object({
@@ -39,15 +40,10 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50 flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-emerald-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg">
-              <Zap className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">Billetra</span>
-          </div>
+          <Logo variant="full" size={84} />
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
@@ -115,13 +111,13 @@ export default function Signup() {
 
           <p className="text-center text-xs text-gray-400 mt-4">
             By signing up, you agree to our{' '}
-            <a href="#" className="text-indigo-600">Terms of Service</a> and{' '}
-            <a href="#" className="text-indigo-600">Privacy Policy</a>
+            <a href="#" className="text-primary-600">Terms of Service</a> and{' '}
+            <a href="#" className="text-primary-600">Privacy Policy</a>
           </p>
 
           <p className="text-center text-sm text-gray-500 mt-5">
             Already have an account?{' '}
-            <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">
+            <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700">
               Sign in
             </Link>
           </p>

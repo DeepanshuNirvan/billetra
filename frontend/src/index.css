@@ -185,6 +185,25 @@
     color: var(--color-text, #111827);
     margin: 0;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tighter tracking on headings for a more polished, premium feel */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.011em;
+  }
+
+  /* Branded text selection */
+  ::selection {
+    background-color: var(--color-primary-200);
+    color: var(--color-text, #111827);
+  }
+
+  /* Tabular figures for crisp number/currency columns */
+  table, .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   /* Scrollbar styling */
@@ -242,6 +261,22 @@
   .slide-in-from-right-5 {
     animation: slideInFromRight5 0.3s ease-out;
   }
+
+  /* Mobile bottom-sheet entrance */
+  .sheet-up {
+    animation: sheetUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
+@media (min-width: 768px) {
+  .sheet-up {
+    animation: none;
+  }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); opacity: 0.6; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes fadeIn {

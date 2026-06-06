@@ -16,7 +16,7 @@ const colorClasses: Record<BadgeColor, string> = {
   yellow: 'bg-yellow-100 text-yellow-700',
   red: 'bg-red-100 text-red-700',
   blue: 'bg-blue-100 text-blue-700',
-  indigo: 'bg-indigo-100 text-indigo-700',
+  indigo: 'bg-primary-100 text-primary-700',
   emerald: 'bg-emerald-100 text-emerald-700',
   orange: 'bg-orange-100 text-orange-700',
 };
@@ -27,7 +27,7 @@ const dotColorClasses: Record<BadgeColor, string> = {
   yellow: 'bg-yellow-500',
   red: 'bg-red-500',
   blue: 'bg-blue-500',
-  indigo: 'bg-indigo-500',
+  indigo: 'bg-primary-500',
   emerald: 'bg-emerald-500',
   orange: 'bg-orange-500',
 };

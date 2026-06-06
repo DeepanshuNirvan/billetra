@@ -34,7 +34,7 @@ export function BillPreview({ bill, business }: BillPreviewProps) {
         </div>
 
         <div className="text-right">
-          <h1 className="text-2xl font-bold text-indigo-700 uppercase tracking-wide">
+          <h1 className="text-2xl font-bold text-primary-700 uppercase tracking-wide">
             Tax Invoice
           </h1>
           <p className="text-lg font-bold text-gray-900 mt-1">#{bill.invoiceNumber}</p>
@@ -45,7 +45,7 @@ export function BillPreview({ bill, business }: BillPreviewProps) {
       </div>
 
       {/* Divider */}
-      <div className="border-t-2 border-indigo-600 mb-6" />
+      <div className="border-t-2 border-primary-600 mb-6" />
 
       {/* Bill meta + Customer */}
       <div className="grid grid-cols-2 gap-6 mb-6">
@@ -93,7 +93,7 @@ export function BillPreview({ bill, business }: BillPreviewProps) {
       {/* Items Table */}
       <table className="w-full text-xs mb-6">
         <thead>
-          <tr className="bg-indigo-600 text-white">
+          <tr className="bg-primary-600 text-white">
             <th className="px-3 py-2 text-left rounded-tl-lg">#</th>
             <th className="px-3 py-2 text-left">Item</th>
             <th className="px-3 py-2 text-center">HSN</th>
@@ -160,7 +160,7 @@ export function BillPreview({ bill, business }: BillPreviewProps) {
           )}
           <div className="border-t border-gray-200 pt-2 flex justify-between">
             <span className="font-bold text-gray-900">Total</span>
-            <span className="font-bold text-indigo-700 text-base">
+            <span className="font-bold text-primary-700 text-base">
               {formatCurrency(bill.totalAmount)}
             </span>
           </div>

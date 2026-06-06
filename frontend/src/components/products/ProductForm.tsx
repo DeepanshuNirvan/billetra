@@ -110,7 +110,7 @@ export function ProductForm({ open, onClose, product }: ProductFormProps) {
             <label className="text-sm font-medium text-gray-700">Category</label>
             <select
               {...register('categoryId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Select category</option>
               {categories.map((c) => (
@@ -128,7 +128,7 @@ export function ProductForm({ open, onClose, product }: ProductFormProps) {
             <label className="text-sm font-medium text-gray-700">Unit Type <span className="text-red-500">*</span></label>
             <select
               {...register('unitType')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               {UNIT_TYPES.map((u) => <option key={u} value={u}>{u}</option>)}
             </select>
@@ -138,7 +138,7 @@ export function ProductForm({ open, onClose, product }: ProductFormProps) {
             <label className="text-sm font-medium text-gray-700">GST Rate</label>
             <select
               {...register('gstRate')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               {GST_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}
             </select>
@@ -183,7 +183,7 @@ export function ProductForm({ open, onClose, product }: ProductFormProps) {
             type="checkbox"
             id="isActive"
             {...register('isActive')}
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
           />
           <label htmlFor="isActive" className="text-sm text-gray-700">Active (visible in bills)</label>
         </div>

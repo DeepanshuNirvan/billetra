@@ -29,11 +29,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={clsx(
-              'w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400',
-              'transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+              'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400',
+              'transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500',
               error
-                ? 'border-red-400 focus:ring-red-400'
-                : 'border-gray-300',
+                ? 'border-red-400 focus:ring-red-400/40 focus:border-red-400'
+                : 'border-gray-300 hover:border-gray-400',
               leftAddon && 'pl-9',
               rightAddon && 'pr-9',
               'disabled:bg-gray-50 disabled:cursor-not-allowed',
@@ -77,9 +77,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           rows={3}
           className={clsx(
-            'w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400',
-            'transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none',
-            error ? 'border-red-400 focus:ring-red-400' : 'border-gray-300',
+            'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400',
+            'transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 resize-none',
+            error ? 'border-red-400 focus:ring-red-400/40 focus:border-red-400' : 'border-gray-300 hover:border-gray-400',
             'disabled:bg-gray-50 disabled:cursor-not-allowed',
             className
           )}

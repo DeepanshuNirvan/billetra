@@ -46,6 +46,7 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [coords, setCoords] = useState<Coords | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +66,11 @@ export function SearchableSelect({
   const reposition = useCallback(() => {
     const el = triggerRef.current;
     if (!el) return;
+    if (window.innerWidth < 640) {
+      setIsMobile(true);
+      return;
+    }
+    setIsMobile(false);
     const r = el.getBoundingClientRect();
     const spaceBelow = window.innerHeight - r.bottom;
     const openUp = spaceBelow < PANEL_MAX_H && r.top > spaceBelow;
@@ -169,20 +175,39 @@ export function SearchableSelect({
       </button>
 
       {open &&
-        coords &&
+        (coords || isMobile) &&
         createPortal(
+          <>
+            {isMobile && (
+              <div
+                className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-sm sm:hidden"
+                onClick={() => setOpen(false)}
+              />
+            )}
           <div
             ref={panelRef}
-            style={{
-              position: 'fixed',
-              left: coords.left,
-              top: coords.openUp ? undefined : coords.top + 4,
-              bottom: coords.openUp ? window.innerHeight - coords.top + 4 : undefined,
-              width: Math.max(coords.width, 220),
-              zIndex: 1000,
-            }}
-            className="bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden"
+            style={
+              isMobile
+                ? { position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 1000 }
+                : {
+                    position: 'fixed',
+                    left: coords!.left,
+                    top: coords!.openUp ? undefined : coords!.top + 4,
+                    bottom: coords!.openUp ? window.innerHeight - coords!.top + 4 : undefined,
+                    width: Math.max(coords!.width, 220),
+                    zIndex: 1000,
+                  }
+            }
+            className={clsx(
+              'bg-white border border-gray-200 shadow-2xl overflow-hidden',
+              isMobile ? 'rounded-t-2xl sheet-up' : 'rounded-xl'
+            )}
           >
+            {isMobile && (
+              <div className="flex justify-center pt-2.5 pb-1">
+                <span className="h-1.5 w-10 rounded-full bg-gray-300" />
+              </div>
+            )}
             <div className="p-2 border-b border-gray-100">
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-2 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100">
                 <Search className="h-4 w-4 text-gray-400 shrink-0" />
@@ -205,7 +230,7 @@ export function SearchableSelect({
                 )}
               </div>
             </div>
-            <div className="overflow-y-auto py-1" style={{ maxHeight: PANEL_MAX_H - 56 }}>
+            <div className="overflow-y-auto py-1" style={{ maxHeight: isMobile ? '55vh' : PANEL_MAX_H - 56 }}>
               {emptyLabel !== undefined && (
                 <button
                   type="button"
@@ -241,7 +266,8 @@ export function SearchableSelect({
                 ))
               )}
             </div>
-          </div>,
+          </div>
+          </>,
           document.body
         )}
     </div>

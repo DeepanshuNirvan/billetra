@@ -47,7 +47,7 @@ export default function GSTReport() {
   };
 
   const columns = [
-    { key: 'invoice', header: 'Invoice #', cell: (r: GSTReportRow) => <span className="font-semibold text-indigo-700">#{r.invoiceNumber}</span> },
+    { key: 'invoice', header: 'Invoice #', cell: (r: GSTReportRow) => <span className="font-semibold text-primary-700">#{r.invoiceNumber}</span> },
     { key: 'customer', header: 'Customer', cell: (r: GSTReportRow) => <span className="text-gray-900">{r.customerName}</span> },
     { key: 'date', header: 'Date', cell: (r: GSTReportRow) => formatDate(r.billDate) },
     { key: 'taxable', header: 'Taxable', cell: (r: GSTReportRow) => formatCurrency(r.taxable) },
@@ -55,7 +55,7 @@ export default function GSTReport() {
     { key: 'sgst', header: 'SGST', cell: (r: GSTReportRow) => r.isInterstate ? '-' : formatCurrency(r.sgst) },
     { key: 'igst', header: 'IGST', cell: (r: GSTReportRow) => r.isInterstate ? formatCurrency(r.igst) : '-' },
     { key: 'totalGst', header: 'Total GST', cell: (r: GSTReportRow) => <span className="font-semibold">{formatCurrency(r.totalGst)}</span> },
-    { key: 'total', header: 'Total', cell: (r: GSTReportRow) => <span className="font-bold text-indigo-700">{formatCurrency(r.total)}</span> },
+    { key: 'total', header: 'Total', cell: (r: GSTReportRow) => <span className="font-bold text-primary-700">{formatCurrency(r.total)}</span> },
     { key: 'type', header: 'Type', cell: (r: GSTReportRow) => <Badge color={r.isInterstate ? 'blue' : 'indigo'} size="sm">{r.isInterstate ? 'IGST' : 'CGST+SGST'}</Badge> },
   ];
 
@@ -73,12 +73,12 @@ export default function GSTReport() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
         </div>
       </Card>
@@ -91,7 +91,7 @@ export default function GSTReport() {
           { label: 'SGST', value: formatCurrency(totals.sgst), color: 'text-purple-600' },
           { label: 'IGST', value: formatCurrency(totals.igst), color: 'text-orange-600' },
           { label: 'Total GST', value: formatCurrency(totals.totalGst), color: 'text-emerald-600' },
-          { label: 'Grand Total', value: formatCurrency(totals.total), color: 'text-indigo-700' },
+          { label: 'Grand Total', value: formatCurrency(totals.total), color: 'text-primary-700' },
         ].map(({ label, value, color }) => (
           <Card key={label}>
             <p className="text-xs text-gray-400 uppercase font-semibold">{label}</p>

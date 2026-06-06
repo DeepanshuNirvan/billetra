@@ -58,7 +58,7 @@ export default function SalesReport() {
     { key: 'cgst', header: 'CGST', cell: (r: SalesReportRow) => formatCurrency(r.cgst) },
     { key: 'sgst', header: 'SGST', cell: (r: SalesReportRow) => formatCurrency(r.sgst) },
     { key: 'igst', header: 'IGST', cell: (r: SalesReportRow) => formatCurrency(r.igst) },
-    { key: 'total', header: 'Total', cell: (r: SalesReportRow) => <span className="font-bold text-indigo-700">{formatCurrency(r.total)}</span> },
+    { key: 'total', header: 'Total', cell: (r: SalesReportRow) => <span className="font-bold text-primary-700">{formatCurrency(r.total)}</span> },
   ];
 
   return (
@@ -76,17 +76,17 @@ export default function SalesReport() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Group By</label>
             <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as 'day' | 'month')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
               <option value="day">Daily</option>
               <option value="month">Monthly</option>
             </select>
@@ -97,7 +97,7 @@ export default function SalesReport() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Sales', value: formatCurrency(totals.total), color: 'text-indigo-700' },
+          { label: 'Total Sales', value: formatCurrency(totals.total), color: 'text-primary-700' },
           { label: 'Taxable Amount', value: formatCurrency(totals.taxable), color: 'text-gray-900' },
           { label: 'Total Tax', value: formatCurrency(totals.cgst + totals.sgst + totals.igst), color: 'text-emerald-600' },
           { label: 'Total Invoices', value: String(totals.invoiceCount), color: 'text-gray-900' },

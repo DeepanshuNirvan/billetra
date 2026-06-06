@@ -17,6 +17,11 @@ interface TableProps<T> {
   emptyMessage?: string;
   loading?: boolean;
   stickyHeader?: boolean;
+  /**
+   * When provided, the desktop table is hidden on small screens and each row
+   * renders as a stacked card instead — avoids horizontal scrolling on mobile.
+   */
+  renderMobileCard?: (row: T, index: number) => ReactNode;
 }
 
 export function Table<T>({
@@ -27,64 +32,99 @@ export function Table<T>({
   emptyMessage = 'No data found',
   loading,
   stickyHeader,
+  renderMobileCard,
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-100">
-      <table className="w-full text-sm">
-        <thead className={clsx('bg-gray-50', stickyHeader && 'sticky top-0 z-10')}>
-          <tr>
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                className={clsx(
-                  'px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider',
-                  col.headerClassName
-                )}
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-50">
+    <>
+      {/* Mobile card list */}
+      {renderMobileCard && (
+        <div className="md:hidden space-y-3">
           {loading ? (
-            <tr>
-              <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-400">
-                <div className="flex justify-center">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-                </div>
-              </td>
-            </tr>
+            <div className="flex justify-center py-12">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+            </div>
           ) : data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-400 text-sm">
-                {emptyMessage}
-              </td>
-            </tr>
+            <div className="py-12 text-center text-gray-400 text-sm">{emptyMessage}</div>
           ) : (
             data.map((row, i) => (
-              <tr
+              <div
                 key={keyExtractor(row, i)}
                 onClick={() => onRowClick?.(row)}
                 className={clsx(
-                  'transition-colors',
-                  onRowClick && 'cursor-pointer hover:bg-gray-50'
+                  'rounded-2xl border border-gray-100 bg-white p-4 shadow-sm shadow-gray-200/50 transition-all',
+                  onRowClick && 'cursor-pointer active:scale-[0.99] hover:border-gray-200'
                 )}
               >
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={clsx('px-4 py-3 text-gray-700', col.className)}
-                  >
-                    {col.cell(row, i)}
-                  </td>
-                ))}
-              </tr>
+                {renderMobileCard(row, i)}
+              </div>
             ))
           )}
-        </tbody>
-      </table>
-    </div>
+        </div>
+      )}
+
+      {/* Desktop table */}
+      <div
+        className={clsx(
+          'overflow-x-auto rounded-2xl border border-gray-100 shadow-sm shadow-gray-200/50',
+          renderMobileCard && 'hidden md:block'
+        )}
+      >
+        <table className="w-full text-sm">
+          <thead className={clsx('bg-gray-50/80', stickyHeader && 'sticky top-0 z-10')}>
+            <tr>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className={clsx(
+                    'px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider',
+                    col.headerClassName
+                  )}
+                >
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-100">
+            {loading ? (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-400">
+                  <div className="flex justify-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+                  </div>
+                </td>
+              </tr>
+            ) : data.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-400 text-sm">
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              data.map((row, i) => (
+                <tr
+                  key={keyExtractor(row, i)}
+                  onClick={() => onRowClick?.(row)}
+                  className={clsx(
+                    'transition-colors',
+                    onRowClick && 'cursor-pointer hover:bg-primary-50/40'
+                  )}
+                >
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className={clsx('px-4 py-3.5 text-gray-700', col.className)}
+                    >
+                      {col.cell(row, i)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
@@ -122,7 +162,7 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
               className={clsx(
                 'w-9 h-9 rounded-lg text-sm font-medium transition-colors',
                 p === page
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
               )}
             >
