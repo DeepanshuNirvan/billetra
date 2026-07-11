@@ -361,6 +361,15 @@ func (p *pdfCtx) cellLeft(s string) {
 	p.pdf.CellFormat(p.contentW, 4.6, s, "", 1, "L", false, 0, "")
 }
 
+// wrapLines renders each line word-wrapped within w at the left margin.
+// CellFormat never wraps, so long addresses overflow; MultiCell wraps and advances Y.
+func (p *pdfCtx) wrapLines(w, h float64, lines []string) {
+	for _, l := range lines {
+		p.pdf.SetX(p.mL)
+		p.pdf.MultiCell(w, h, l, "", "L", false)
+	}
+}
+
 func (p *pdfCtx) footer(note string) {
 	p.pdf.SetAutoPageBreak(false, 0)
 	defer p.pdf.SetAutoPageBreak(true, p.mT)
@@ -470,9 +479,7 @@ func renderModern(p *pdfCtx) {
 	p.cellLeft(name)
 	p.font("", 8.5)
 	p.text(p.th.muted)
-	for _, l := range lines {
-		p.cellLeft(l)
-	}
+	p.wrapLines(p.contentW, 4.6, lines)
 	p.ln(4)
 
 	p.standardItemsTable(true, false)
@@ -529,10 +536,7 @@ func renderClassicGST(p *pdfCtx) {
 	p.pdf.CellFormat(colW, 5, name, "", 1, "L", false, 0, "")
 	p.font("", 8.5)
 	p.text(p.th.body)
-	for _, l := range lines {
-		p.pdf.SetX(p.mL)
-		p.pdf.CellFormat(colW, 4.4, l, "", 1, "L", false, 0, "")
-	}
+	p.wrapLines(colW-3, 4.4, lines)
 	leftEnd := p.y()
 
 	p.setY(yBox)
@@ -623,10 +627,7 @@ func renderCorporate(p *pdfCtx) {
 	p.pdf.CellFormat(colW, 5.5, name, "", 1, "L", false, 0, "")
 	p.font("", 8.5)
 	p.text(p.th.muted)
-	for _, l := range lines {
-		p.pdf.SetX(p.mL)
-		p.pdf.CellFormat(colW, 4.4, l, "", 1, "L", false, 0, "")
-	}
+	p.wrapLines(colW-3, 4.4, lines)
 	leftEnd := p.y()
 	p.setY(yBox)
 	for _, m := range p.metaRows() {
@@ -700,10 +701,7 @@ func renderElegant(p *pdfCtx) {
 	p.pdf.CellFormat(colW, 5, name, "", 1, "L", false, 0, "")
 	p.font("", 8)
 	p.text(p.th.body)
-	for _, l := range lines {
-		p.pdf.SetX(p.mL)
-		p.pdf.CellFormat(colW, 4.4, l, "", 1, "L", false, 0, "")
-	}
+	p.wrapLines(colW-3, 4.4, lines)
 	leftEnd := p.y()
 	p.setY(yBox)
 	for _, m := range p.metaRows() {
@@ -914,10 +912,7 @@ func renderRoyal(p *pdfCtx) {
 	p.pdf.CellFormat(colW, 5.5, name, "", 1, "L", false, 0, "")
 	p.font("", 8.5)
 	p.text(p.th.muted)
-	for _, l := range lines {
-		p.pdf.SetX(p.mL)
-		p.pdf.CellFormat(colW, 4.4, l, "", 1, "L", false, 0, "")
-	}
+	p.wrapLines(colW-3, 4.4, lines)
 	leftEnd := p.y()
 	p.setY(yBox)
 	for _, m := range p.metaRows() {
@@ -1009,9 +1004,7 @@ func renderMinimal(p *pdfCtx) {
 	p.cellLeft(name)
 	p.font("", 8.5)
 	p.text(p.th.muted)
-	for _, l := range lines {
-		p.cellLeft(l)
-	}
+	p.wrapLines(p.contentW, 4.6, lines)
 	p.ln(4)
 
 	p.standardItemsTable(false, false)
